@@ -1,7 +1,7 @@
 
 # Nvidia on Fedora desktops
 
-The reason I created this guide is the fragmentation of steps in official documentation on RPM Fusion. Hopefully, This will help you to get Nvidia working.
+This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers.  
 
 
 ## What you need to know
