@@ -89,9 +89,14 @@ systemctl reboot
 
 ## 3. Installing the drivers
 
-You will need to identify your GPU to choose which drivers to install. 
+You will need to identify your GPU to choose which drivers to install. Run:
 
-## For 2014 or higher NVIDIA GPUs (Current GeForce, Quadro and Tesla):
+
+```bash
+/sbin/lspci | grep -e VGA
+```
+
+## For NVIDIA GPUs from 2014 or higher (Current GeForce, Quadro and Tesla):
 
 ```bash
 sudo dnf install akmod-nvidia
@@ -103,11 +108,6 @@ sudo dnf install xorg-x11-drv-nvidia-cuda #for cuda and nvidia-smi
 ```bash
 sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
 sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
-```
-If you are uncertain on which to choose, check your driver model with the following command:
-
-```bash
-/sbin/lspci | grep -e VGA
 ```
 
 ## Final step
