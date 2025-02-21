@@ -112,7 +112,7 @@ sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
 
 ## Final step
 
-Now that we installed the driver, confirm that they are built by running:
+Now that we installed the driver, confirm that it's built by running:
 
 ```bash
 modinfo -F version nvidia
@@ -240,7 +240,7 @@ systemctl reboot
 
 ## Final step
 
-Now that we installed the driver, confirm that they are built by running:
+Now that we installed the driver, confirm that it's built by running:
 
 ```bash
 modinfo -F version nvidia
