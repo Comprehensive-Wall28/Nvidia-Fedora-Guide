@@ -1,9 +1,8 @@
 
 # Nvidia on Fedora desktops
 
-## Beginner notes:
+The reason I created this guide is the fragmentation of steps in official documentation on RPM Fusion. Hopefully, This will help you to get Nvidia working.
 
-The reason I created this guide is the fragmentation of steps in official documentation on RPM Fusion. 
 
 ## What you need to know
 
@@ -14,7 +13,8 @@ Please, run the following command in the terminal to determine if you have Secur
 ```bash
 mokutil --sb-state
 ```
-This will slightly complicate it for you if enabled (which, it should be). However, if it is disabled you will skip the steps for secureboot making it much easier. 
+
+This will slightly complicate it for you if enabled (which, it should be). However, if it is disabled you will skip the steps for secureboot making it much easier. Don't disable Secure Boot if it was already enabled! 
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
@@ -22,11 +22,109 @@ You will mostly need to just copy and paste commands into the terminal. But, mak
 
 If you find any mistake or want to add some missing information, create a pull request with the changes or just create an issue. All help is appreciated!
 
+
 ## Determine your system
 
 This guide is made STRICTILY for Fedora Workstation and all it's spins (KDE and etc). Fedora Atomic (Silverblue, Kinoite and etc).
 
 Please scroll down the the relevant section related to your Fedora installation.
+
+# Fedora Workstation and it's spins
+
+## 0. Before we get started!
+
+If you have Secure Boot disabled, Skip to step 3
+
+Otherwise, it's still easy to get the drivers with Secure Boot. 
+
+## 1. Preparation
+
+* **Update your system:** Ensure your Silverblue installation is up-to-date:
+
+```bash
+sudo dnf update
+```
+
+## 2. Secure Boot key enrollment
+
+* **Install these packages:**
+
+```bash
+sudo dnf install kmodtool akmods mokutil openssl
+```
+
+* **Generate a default key:**
+
+```bash
+sudo kmodgenca -a
+```
+
+* **Enroll the key in MOK:**
+
+After running the command, you will be asked for a password. Create a short password (ex: 0000) and remember it for a later step!
+
+```bash
+sudo mokutil --import /etc/pki/akmods/certs/public_key.der
+```
+
+* **Reboot to enroll:**
+
+On the next boot MOK Management is launched and you have to choose "Enroll MOK" (MOK management is a blue screen on startup)
+
+Choose "Continue" to enroll the key.
+
+Enroll by selecting "Yes".
+
+You will need to enter the password you created earlier.
+
+```bash
+systemctl reboot
+```
+
+## 3. Installing the drivers
+
+You will need to identify your GPU to choose which drivers to install. 
+
+## For 2014 or higher NVIDIA gpus (Current GeForce, Quadro and Tesla):
+
+```bash
+sudo dnf install akmod-nvidia
+sudo dnf install xorg-x11-drv-nvidia-cuda #for cuda and nvidia-smi
+```
+
+## For legacy GeForce 600/700 series (Kepler):
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
+sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
+```
+If you are uncertain on which to choose, check your driver model with the following command:
+
+```bash
+/sbin/lspci | grep -e VGA
+```
+
+## Final step
+
+Now that we installed the driver, confirm that they are built by running:
+
+```bash
+modinfo -F version nvidia
+```
+In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command
+
+When the output is correct then you are finally done with the installation! Reboot your system.
+
+If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
+
+After booting, run the following in the terminal to check your GPU's status:
+
+```bash
+nvidia-smi
+```
+NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
+
+
 
 
 # Installing NVIDIA Drivers on Fedora Atomic
@@ -99,7 +197,7 @@ sudo bash setup.sh
 sudo rpm-ostree install akmods-keys-*.rpm
 ```
 
-## 4. Install NVIDIA Drivers
+## 4. Install NVIDIA Drivers (For current GeForce, Tesla and Quadro GPUs)
 
 * **Install the `akmod` package:**
 
@@ -135,7 +233,3 @@ You will need to enter the password you created earlier.
 ```bash
 systemctl reboot
 ```
-
-## Important Notes:
-
-TBA
