@@ -1,5 +1,4 @@
-
-# Nvidia on Fedora desktops
+# NVIDIA on Fedora desktops
 
 This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and more) and Atomic desktops (Silverblue, Kinoite and more).
 
@@ -14,7 +13,7 @@ Run the following command in the terminal to check Secure Boot status:
 mokutil --sb-state
 ```
 
-This will slightly complicate it for you if enabled. Don't disable Secure Boot if it was already enabled to improve your security.
+If enabled, you will need to follow some extra (but simple) steps. Don't disable Secure Boot if it was already enabled to improve your security.
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
@@ -22,10 +21,12 @@ You will mostly need to just copy and paste commands into the terminal. But, mak
 
 If you find any mistake or want to add some missing information, create a pull request with the changes or just create an issue. All help is appreciated!
 
+Consult the official documentation (Sources listed below) if more information is needed!
+
 
 ## Determine your system
 
-This guide is made STRICTILY for Fedora Workstation and all it's spins (KDE and etc). Fedora Atomic (Silverblue, Kinoite and etc).
+This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and etc). Fedora Atomic (Silverblue, Kinoite and etc).
 
 Please scroll down the the relevant section related to your Fedora installation.
 
@@ -90,7 +91,7 @@ systemctl reboot
 
 You will need to identify your GPU to choose which drivers to install. 
 
-## For 2014 or higher NVIDIA gpus (Current GeForce, Quadro and Tesla):
+## For 2014 or higher NVIDIA GPUs (Current GeForce, Quadro and Tesla):
 
 ```bash
 sudo dnf install akmod-nvidia
@@ -136,7 +137,7 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 ## 0. Before we get started!
 
-Due to Fedora Atomic's immutable nature, we will need to use a "trick" to get the drivers correctly working with SecureBoot. 
+Due to Fedora Atomic's immutable nature, we will need to use a "trick" to get the drivers correctly working with Secure Boot. 
 Thanks to CheariX for providing the fix to everyone: https://github.com/CheariX/silverblue-akmods-keys
 
 The beauty of Atomic is the possibility to revert if anything gets messed up! Please check the official Fedora documentation to learn how you can do so: 
