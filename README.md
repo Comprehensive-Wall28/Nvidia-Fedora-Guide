@@ -33,8 +33,7 @@ Please scroll down the the relevant section related to your Fedora installation.
 
 ## 0. Before we get started!
 
-If you have Secure Boot disabled, Skip to step 3
-
+If you have Secure Boot disabled, Skip step 2.
 Otherwise, it's still easy to get the drivers with Secure Boot. 
 
 ## 1. Preparation
