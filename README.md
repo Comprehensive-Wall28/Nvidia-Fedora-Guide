@@ -1,7 +1,7 @@
 
 # Nvidia on Fedora desktops
 
-This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers.  
+This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and more) and Atomic desktops (Silverblue, Kinoite and more).
 
 
 ## What you need to know
