@@ -6,15 +6,15 @@ The reason I created this guide is the fragmentation of steps in official docume
 
 ## What you need to know
 
-The hardest part for many is getting the drivers to load with Secure Boot. Secure Boot blocks Nvidia driver's modules from loading unless we sign them.
+The hardest part is getting the drivers to load with Secure Boot. Secure Boot blocks the driver's modules from loading unless we sign them.
 
-Please, run the following command in the terminal to determine if you have Secure Boot enabled:
+Run the following command in the terminal to check Secure Boot status:
 
 ```bash
 mokutil --sb-state
 ```
 
-This will slightly complicate it for you if enabled (which, it should be). However, if it is disabled you will skip the steps for secureboot making it much easier. Don't disable Secure Boot if it was already enabled! 
+This will slightly complicate it for you if enabled. Don't disable Secure Boot if it was already enabled to improve your security.
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
@@ -29,7 +29,7 @@ This guide is made STRICTILY for Fedora Workstation and all it's spins (KDE and 
 
 Please scroll down the the relevant section related to your Fedora installation.
 
-# Fedora Workstation and it's spins
+# Installing NVIDIA drivers on Fedora Workstation and it's spins
 
 ## 0. Before we get started!
 
@@ -42,6 +42,12 @@ Otherwise, it's still easy to get the drivers with Secure Boot.
 
 ```bash
 sudo dnf update
+```
+
+* **Enable RPM Fusion:** This provides access to the NVIDIA drivers.
+
+```bash
+sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 ```
 
 ## 2. Secure Boot key enrollment
@@ -133,9 +139,7 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 Due to Fedora Atomic's immutable nature, we will need to use a "trick" to get the drivers correctly working with SecureBoot. 
 Thanks to CheariX for providing the fix to everyone: https://github.com/CheariX/silverblue-akmods-keys
 
-Additionally, installed packages will be layered on your installation. While completely supported, this *might* cause issues when upgrading Fedora versions (ex: from Fedora 41 to 42) 
-
-The beauty of Atomic is that you can easily revert if anything gets messed up! Please check the official Fedora documentation to see how you can do so if anything gets messed up: 
+The beauty of Atomic is the possibility to revert if anything gets messed up! Please check the official Fedora documentation to learn how you can do so: 
 https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollbacks/
 
 ## 1. Preparation
@@ -164,7 +168,7 @@ sudo rpm-ostree install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free
 systemctl reboot
 ```
 
-## 2. Set up Secure Boot (Secure Boot enabled only!)
+## 2. Set up the Secure Boot key (Secure Boot enabled only!)
 
 * **Generate a Machine Owner Key (MOK):**
 
@@ -232,3 +236,30 @@ You will need to enter the password you created earlier.
 ```bash
 systemctl reboot
 ```
+
+## Final step
+
+Now that we installed the driver, confirm that they are built by running:
+
+```bash
+modinfo -F version nvidia
+```
+In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command
+
+When the output is correct then you are finally done with the installation! Reboot your system.
+
+If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
+
+After booting, run the following in the terminal to check your GPU's status:
+
+```bash
+nvidia-smi
+```
+NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
+
+# Sources
+https://rpmfusion.org/Configuration
+https://rpmfusion.org/Howto/NVIDIA
+https://rpmfusion.org/Howto/Secure%20Boot
+
+
