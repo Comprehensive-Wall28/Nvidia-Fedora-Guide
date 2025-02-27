@@ -237,9 +237,7 @@ Now that we installed the driver, confirm that it's built by running:
 ```bash
 modinfo -F version nvidia
 ```
-In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command
-
-When the output is correct then you are finally done with the installation! Reboot your system.
+In the output you should see the driver version number.
 
 If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
 
