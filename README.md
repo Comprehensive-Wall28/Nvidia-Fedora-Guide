@@ -203,21 +203,13 @@ sudo rpm-ostree install akmods-keys-*.rpm
 
 ## 4. Install NVIDIA Drivers (For current GeForce, Tesla and Quadro GPUs)
 
+Install the driver and Cuda. Last command will blacklist the Nouveau driver.
+
 * **Install the `akmod` package:**
 
 ```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia
-```
-
-* **Install CUDA (This gives you access to "nvidia-smi" which will be useful):**
-
-```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia-cuda
-```
-
-* **Blacklist Nouveau:** This prevents conflicts with the NVIDIA driver and Nouveau driver.
-
-```bash
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau --append=modprobe.blacklist=nouveau --append=nvidia-drm.modeset=1
 ```
 
