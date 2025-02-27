@@ -209,7 +209,7 @@ Install the driver and Cuda. Last command will blacklist the Nouveau driver.
 
 ```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia
-sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia-cuda
+sudo rpm-ostree install xorg-x11-drv-nvidia-cuda
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau --append=modprobe.blacklist=nouveau --append=nvidia-drm.modeset=1
 ```
 
