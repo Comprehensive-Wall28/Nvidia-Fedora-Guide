@@ -190,7 +190,7 @@ sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 * **Clone the repository:**
 
 ```bash
-git clone [https://github.com/CheariX/silverblue-akmods-keys](https://github.com/CheariX/silverblue-akmods-keys)
+git clone https://github.com/CheariX/silverblue-akmods-keys
 cd silverblue-akmods-keys
 ```
 
