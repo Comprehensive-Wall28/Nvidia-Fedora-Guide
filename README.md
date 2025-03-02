@@ -24,11 +24,11 @@ If you find any mistake or want to add some missing information, create a pull r
 Consult the official documentation (Sources listed below) if more information is needed!
 
 
-## Determine your system
+## Identify your system
 
-This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and etc). Fedora Atomic (Silverblue, Kinoite and etc).
+This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and etc) and Fedora Atomic (Silverblue, Kinoite and etc).
 
-Please scroll down the the relevant section related to your Fedora installation.
+Please scroll down to the relevant section related to your Fedora installation.
 
 # Installing NVIDIA drivers on Fedora Workstation and it's spins
 
@@ -205,7 +205,7 @@ sudo rpm-ostree install akmods-keys-*.rpm
 
 Install the driver and Cuda. Last command will blacklist the Nouveau driver.
 
-* **Install the `akmod` package:**
+* **Install the Nvidia driver with Cuda:**
 
 ```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia
