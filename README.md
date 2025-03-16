@@ -39,7 +39,7 @@ Otherwise, it's still easy to get the drivers with Secure Boot.
 
 ## 1. Preparation
 
-* **Update your system:** Ensure your Silverblue installation is up-to-date:
+* **Update your system:** Ensure your installation is up-to-date:
 
 ```bash
 sudo dnf update
