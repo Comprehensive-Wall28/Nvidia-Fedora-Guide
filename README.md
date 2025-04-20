@@ -89,12 +89,13 @@ systemctl reboot
 
 ## 3. Installing the drivers
 
-You will need to identify your GPU to choose which drivers to install. Run:
+You will need to identify your GPU to choose which drivers to install. Run this command to find your GPU:
 
 
 ```bash
 /sbin/lspci | grep -e VGA
 ```
+Accordingly, choose which driver to download below:
 
 ## For NVIDIA GPUs from 2014 or higher (Current GeForce, Quadro and Tesla):
 
@@ -131,6 +132,7 @@ nvidia-smi
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 
+//------------------------------------------------------------------------------------------//
 
 
 # Installing NVIDIA Drivers on Fedora Atomic
@@ -208,8 +210,7 @@ Install the driver and Cuda. Last command will blacklist the Nouveau driver.
 * **Install the Nvidia driver with Cuda:**
 
 ```bash
-sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia
-sudo rpm-ostree install xorg-x11-drv-nvidia-cuda
+sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cuda
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau --append=modprobe.blacklist=nouveau --append=nvidia-drm.modeset=1
 ```
 
