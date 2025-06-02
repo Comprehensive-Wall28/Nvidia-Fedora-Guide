@@ -28,7 +28,16 @@ Consult the official documentation (Sources listed below) if more information is
 
 This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and etc) and Fedora Atomic (Silverblue, Kinoite and etc).
 
-Please scroll down to the relevant section related to your Fedora installation.
+Please scroll down to the relevant section related to your Fedora installation or choose from table of contents:
+
+## Table of Contents
+
+1.  [Fedora Workstation & KDE (etc)](#installing-nvidia-drivers-on-fedora-workstation-and-its-spins)
+
+2.  [Fedora Atomic (Silverblue & Kinoite etc)](#installing-nvidia-drivers-on-fedora-atomic)
+
+3.  [Sources](#sources)
+---
 
 # Installing NVIDIA drivers on Fedora Workstation and it's spins
 
