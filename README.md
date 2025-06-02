@@ -259,8 +259,8 @@ nvidia-smi
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 # Sources
-https://rpmfusion.org/Configuration
-https://rpmfusion.org/Howto/NVIDIA
-https://rpmfusion.org/Howto/Secure%20Boot
+* https://rpmfusion.org/Configuration
+* https://rpmfusion.org/Howto/NVIDIA
+* https://rpmfusion.org/Howto/Secure%20Boot
 
 
