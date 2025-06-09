@@ -35,8 +35,10 @@ Please scroll down to the relevant section related to your Fedora installation o
 1.  [Fedora Workstation & KDE (etc)](#installing-nvidia-drivers-on-fedora-workstation-and-its-spins)
 
 2.  [Fedora Atomic (Silverblue & Kinoite etc)](#installing-nvidia-drivers-on-fedora-atomic)
+   
+3.  [Common Problems](#common-problems)
 
-3.  [Sources](#sources)
+4.  [Sources](#sources)
 ---
 
 # Installing NVIDIA drivers on Fedora Workstation and it's spins
@@ -258,9 +260,62 @@ nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
+## Important Note (Silverblue)
+
+Enabling the RPM fusion repo alone will enable it in a "fixed" state. Meaning after a major Fedora update (42 -> 43) The repos won't be updated!
+
+To optionally (recommended) "unlock", Run the following command:
+
+```bash
+sudo rpm-ostree update \
+    --uninstall rpmfusion-free-release \
+    --uninstall rpmfusion-nonfree-release \
+    --install rpmfusion-free-release \
+    --install rpmfusion-nonfree-release
+```
+
+After that, reboot!
+
+```bash
+reboot
+```
+
+For more information about this, check the official documentation: https://docs.fedoraproject.org/en-US/fedora-silverblue/tips-and-tricks/#_enabling_rpm_fusion_repos
+
+# Common Problems
+
+## Nvidia modules failed to load (on startup)
+
+If you got this message after installation, The secure boot enrollment was not done properly. Please retry the Secureboot steps mentioned for your Fedora installation. 
+No need to reinstall the drivers themselves!
+
+## Black screen after booting up
+
+This means the installed drivers were the incorrect version for your GPU (Was kepler but installed Geforce instead and vice versa)
+If that happens, boot into TTY (reboot and spam CTRL+ALT+F2) and remove the Nvidia packages manually
+
+For workstation and it's spins:
+
+```bash
+sudo dnf remove "*nvidia*" "*akmod-nvidia*" "*xorg-x11-drv-nvidia*"
+
+sudo dracut -f --regenerate-all
+```
+
+For Atomic desktops:
+
+```bash
+rpm-ostree override reset "*nvidia*"
+```
+
 # Sources
+Configuring RPMFusion:
 * https://rpmfusion.org/Configuration
+  
+RPMFusion Nvidia Documentation:
 * https://rpmfusion.org/Howto/NVIDIA
+
+RPMFusion Secureboot Documentation:
 * https://rpmfusion.org/Howto/Secure%20Boot
 
 
