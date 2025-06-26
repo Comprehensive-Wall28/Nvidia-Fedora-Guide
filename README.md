@@ -222,7 +222,7 @@ Install the driver and Cuda. Last command will blacklist the Nouveau driver.
 
 ```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cuda
-sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau --append=modprobe.blacklist=nouveau --append=nvidia-drm.modeset=1
+sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1
 ```
 
 ## 5. Reboot and Enroll the Key. (Key enrollment will happen for Secure Boot enabled only!!)
