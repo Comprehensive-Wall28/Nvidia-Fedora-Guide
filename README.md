@@ -308,6 +308,17 @@ For Atomic desktops:
 rpm-ostree override reset "*nvidia*"
 ```
 
+## For Atomic users who updated to kernel 6.15 and had the drivers fail
+
+If you installed the drivers and updated to 6.15, you need to add "nova_core" to the blacklist alongside nouveau. 
+Ignore this if it's working properly since it's only for those who followed the steps before I added 
+nova_core to the commands. If you ran the older command run:
+
+```bash
+sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core
+```
+This should fix the issue with the drivers.
+
 # Sources
 Configuring RPMFusion:
 * https://rpmfusion.org/Configuration
