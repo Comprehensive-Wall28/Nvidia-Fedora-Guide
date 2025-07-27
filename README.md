@@ -1,6 +1,6 @@
 # NVIDIA on Fedora desktops
 
-This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and more) and Atomic desktops (Silverblue, Kinoite and more).
+This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and Cosmic spins) and Atomic desktops (Silverblue, Kinoite and Sway).
 
 
 ## What you need to know
@@ -17,24 +17,34 @@ If enabled, you will need to follow some extra (but simple) steps. Don't disable
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
+Please check if your Desktop Environment is compatible with the Nvidia drivers since there are more steps needed for some that may not be listed here. This is not a problem for KDE and Gnome but may be a problem for some of the spins. If you find any, please create an issue with the details.
+
 You will mostly need to just copy and paste commands into the terminal. But, make sure to read everything carefully!
 
 If you find any mistake or want to add some missing information, create a pull request with the changes or just create an issue. All help is appreciated!
 
-Consult the official documentation (Sources listed below) if more information is needed!
+Consult the official documentation (Sources listed below) if more information is needed.
 
 
 ## Identify your system
 
-This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and etc) and Fedora Atomic (Silverblue, Kinoite and etc).
+This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and Cosmic) and Fedora Atomic (Silverblue, Kinoite and Sway).
+
+* **Sway Users**
+For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
+
+```env
+SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"
+WLR_NO_HARDWARE_CURSORS=1
+```
 
 Please scroll down to the relevant section related to your Fedora installation or choose from table of contents:
 
 ## Table of Contents
 
-1.  [Fedora Workstation & KDE (etc)](#installing-nvidia-drivers-on-fedora-workstation-and-its-spins)
+1.  [Fedora Workstation & KDE (with spins)](#installing-nvidia-drivers-on-fedora-workstation-and-its-spins)
 
-2.  [Fedora Atomic (Silverblue & Kinoite etc)](#installing-nvidia-drivers-on-fedora-atomic)
+2.  [Fedora Atomic (Silverblue, Kinoite and Sway)](#installing-nvidia-drivers-on-fedora-atomic)
    
 3.  [Common Problems](#common-problems)
 
@@ -102,7 +112,6 @@ systemctl reboot
 
 You will need to identify your GPU to choose which drivers to install. Run this command to find your GPU:
 
-
 ```bash
 /sbin/lspci | grep -e VGA
 ```
@@ -124,12 +133,12 @@ sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
 
 ## Final step
 
-Now that we installed the driver, confirm that it's built by running:
+Now that we installed the driver, confirm that it's built or not by running:
 
 ```bash
 modinfo -F version nvidia
 ```
-In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command
+In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command.
 
 When the output is correct then you are finally done with the installation! Reboot your system.
 
@@ -153,8 +162,10 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 Due to Fedora Atomic's immutable nature, we will need to use a "trick" to get the drivers correctly working with Secure Boot. 
 Thanks to CheariX for providing the fix to everyone: https://github.com/CheariX/silverblue-akmods-keys
 
-The beauty of Atomic is the possibility to revert if anything gets messed up! Please check the official Fedora documentation to learn how you can do so: 
+With Atomic, you can revert easily if anything gets messed up! Please check the official Fedora documentation to learn how you can do so: 
 https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollbacks/
+
+Sway users need to perform two extra steps, one is listed in "Identify your system" above and the other is below when adding the kernel arguments. [Notes provided by shdwpunk].
 
 ## 1. Preparation
 
@@ -216,13 +227,20 @@ sudo rpm-ostree install akmods-keys-*.rpm
 
 ## 4. Install NVIDIA Drivers (For current GeForce, Tesla and Quadro GPUs)
 
-Install the driver and Cuda. Last command will blacklist the Nouveau driver.
+Install the driver and Cuda. Last command will blacklist the Nouveau driver and nova_core. For Sway users, You will need to also add an additional kernel arg listed below: 
 
-* **Install the Nvidia driver with Cuda:**
+* **Install the Nvidia driver with Cuda for Kinoite and Silverblue**
 
 ```bash
 sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cuda
-sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1
+sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1 
+```
+
+* **Install the Nvidia driver with Cuda for Sway Atomic**
+
+```bash
+sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cuda
+sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1 --append=initcall_blacklist=simpledrm_platform_driver_init
 ```
 
 ## 5. Reboot and Enroll the Key. (Key enrollment will happen for Secure Boot enabled only!!)
@@ -260,7 +278,7 @@ nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
-## Important Note (Silverblue)
+## Important Note (Atomic)
 
 Enabling the RPM fusion repo alone will enable it in a "fixed" state. Meaning after a major Fedora update (42 -> 43) The repos won't be updated!
 
@@ -319,6 +337,10 @@ sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=mo
 ```
 This should fix the issue with the drivers.
 
+# Contributers
+
+* shdwpunk
+
 # Sources
 Configuring RPMFusion:
 * https://rpmfusion.org/Configuration
@@ -328,5 +350,10 @@ RPMFusion Nvidia Documentation:
 
 RPMFusion Secureboot Documentation:
 * https://rpmfusion.org/Howto/Secure%20Boot
+
+Nvidia drivers for Sway Atomic
+* https://docs.fedoraproject.org/en-US/fedora-sericea/troubleshooting/#_using_nvidia_drivers
+
+
 
 
