@@ -130,6 +130,17 @@ sudo dnf install xorg-x11-drv-nvidia-cuda #for cuda and nvidia-smi
 sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
 sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
 ```
+Additionally, for this driver (Geforce 600/700 series ONLY!) you need to install X11 session if you are on Gnome or KDE:
+
+Gnome:
+```bash
+sudo dnf install gnome-session-xsession xorg-x11-drivers xorg-x11-xinit
+```
+KDE:
+```bash
+sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
+```
+After the final reboot, Make sure to use the X11 session (found bottom right when logging in)
 
 ## Final step
 
