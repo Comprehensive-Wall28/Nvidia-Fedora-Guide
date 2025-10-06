@@ -85,6 +85,7 @@ sudo dnf install kmodtool akmods mokutil openssl
 ```bash
 sudo kmodgenca -a
 ```
+Note: If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Enroll the key in MOK:**
 
@@ -209,8 +210,9 @@ systemctl reboot
 * **Generate a Machine Owner Key (MOK):**
 
 ```bash
-sudo kmodgenca
+sudo kmodgenca -a
 ```
+Note: If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Import the key:**
 
