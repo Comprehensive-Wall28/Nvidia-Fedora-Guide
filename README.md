@@ -382,7 +382,7 @@ This can also happen if your drive was encrypted. Try the following:
 4. Remove rhgb and quiet if they are there, go to the very end of that line, and add a space, followed by the number 3.
 5. Press Ctrl+x to boot. This will get you to a text-based login where you can enter the LUKS password and afterwards your Fedora username and password.
 
-After that you need to follow the steps listed here: 
+After that you need to follow the steps listed here: [LUKS Encrypted drives](#encrypted-drives)
 
 ## For Atomic users who updated to kernel 6.15 and had the drivers fail
 
