@@ -58,6 +58,8 @@ Please scroll down to the relevant section related to your Fedora installation o
 If you have Secure Boot disabled, Skip step 2.
 Otherwise, it's still easy to get the drivers with Secure Boot. 
 
+If your drive is encrypted with LUKS. You will need to follow some extra steps before final reboot to avoid a black screen on startup. 
+
 ## 1. Preparation
 
 * **Update your system:** Ensure your installation is up-to-date:
@@ -143,7 +145,7 @@ sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
 After the final reboot, Make sure to use the X11 session (found bottom right when logging in)
 
-## Final step
+## Final steps
 
 Now that we installed the driver, confirm that it's built or not by running:
 
@@ -152,7 +154,12 @@ modinfo -F version nvidia
 ```
 In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command.
 
-When the output is correct then you are finally done with the installation! Reboot your system.
+When the output is correct then you are finally done with the installation!
+
+* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
+
+* **Reboot**
+Finally, reboot your system.
 
 If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
 
@@ -162,6 +169,8 @@ After booting, run the following in the terminal to check your GPU's status:
 nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
+
+**If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
 
 //------------------------------------------------------------------------------------------//
@@ -291,6 +300,8 @@ nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
+**If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
+
 ## Important Note (Atomic)
 
 Enabling the RPM fusion repo alone will enable it in a "fixed" state. Meaning after a major Fedora update (42 -> 43) The repos won't be updated!
@@ -312,6 +323,30 @@ reboot
 ```
 
 For more information about this, check the official documentation: https://docs.fedoraproject.org/en-US/fedora-silverblue/tips-and-tricks/#_enabling_rpm_fusion_repos
+
+# Encrypted Drives
+
+* **LUKS-encrypted drives :**
+If your drive is encrypted, you will need to perform the following steps before rebooting.:
+
+In your terminal, run:
+```bash
+sudo nano /etc/dracut.conf.d/nvidia.conf
+```
+
+Add the following line to the end of the file:
+```text
+add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
+```
+Press CTRL + X then Y then ENTER to save the changes
+
+Run the following in terminal:
+```bash
+sudo dracut --force
+```
+After that you can reboot your system.
+
+**If you faced issues, please create an issue and I will try to help**
 
 # Common Problems
 
@@ -339,6 +374,16 @@ For Atomic desktops:
 rpm-ostree override reset "*nvidia*"
 ```
 
+This can also happen if your drive was encrypted. Try the following:
+
+1. Reboot the computer.
+2. When the GRUB menu appears, press e to edit.
+3. Find the line that starts with linux
+4. Remove rhgb and quiet if they are there, go to the very end of that line, and add a space, followed by the number 3.
+5. Press Ctrl+x to boot. This will get you to a text-based login where you can enter the LUKS password and afterwards your Fedora username and password.
+
+After that you need to follow the steps listed here: 
+
 ## For Atomic users who updated to kernel 6.15 and had the drivers fail
 
 If you installed the drivers and updated to 6.15, you need to add "nova_core" to the blacklist alongside nouveau. 
@@ -352,7 +397,8 @@ This should fix the issue with the drivers.
 
 # Contributers
 
-* shdwpunk
+* shdwpunk [Provided additional Sway setup commands]
+* Poid-bit [Provided additional steps for encrypted drives]
 
 # Sources
 Configuring RPMFusion:
