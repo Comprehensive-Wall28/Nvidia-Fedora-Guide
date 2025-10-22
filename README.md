@@ -334,7 +334,7 @@ In your terminal, run:
 sudo nano /etc/dracut.conf.d/nvidia.conf
 ```
 
-Add the following line to the end of the file:
+Add the following line:
 ```text
 add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
