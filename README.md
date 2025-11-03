@@ -23,6 +23,8 @@ You will mostly need to just copy and paste commands into the terminal. But, mak
 
 If you find any mistake or want to add some missing information, create a pull request with the changes or just create an issue. All help is appreciated!
 
+At the end you will find a quick survey, taking it will help me maintain this guide. Thanks!
+
 Consult the official documentation (Sources listed below) if more information is needed.
 
 
@@ -170,6 +172,8 @@ nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
+
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
 
@@ -302,6 +306,8 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
+
 ## Important Note (Atomic)
 
 Enabling the RPM fusion repo alone will enable it in a "fixed" state. Meaning after a major Fedora update (42 -> 43) The repos won't be updated!
@@ -347,6 +353,8 @@ sudo dracut --force
 After that you can reboot your system.
 
 **If you faced issues, please create an issue and I will try to help**
+
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
 
 # Common Problems
 
