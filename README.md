@@ -172,7 +172,7 @@ nvidia-smi
 ```
 NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
-**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
 
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
@@ -306,7 +306,7 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
-**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
 
 ## Important Note (Atomic)
 
@@ -354,7 +354,7 @@ After that you can reboot your system.
 
 **If you faced issues, please create an issue and I will try to help**
 
-**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://comprehensive-wall28.limesurvey.net/549153?lang=en&newtest=Y
+**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
 
 # Common Problems
 
