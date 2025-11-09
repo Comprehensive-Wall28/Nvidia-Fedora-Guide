@@ -13,7 +13,7 @@ Run the following command in the terminal to check Secure Boot status:
 mokutil --sb-state
 ```
 
-If enabled, you will need to follow some extra (but simple) steps. Don't disable Secure Boot if it was already enabled to improve your security.
+If enabled, you will need to follow some extra (but simple) steps. Don't disable Secure Boot if it was already enabled to improve your security. However, if you followed the steps and the driver modules failed to load, disable secure boot to fix the problem.
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
