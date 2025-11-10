@@ -62,6 +62,8 @@ Otherwise, it's still easy to get the drivers with Secure Boot.
 
 If your drive is encrypted with LUKS. You will need to follow some extra steps before final reboot to avoid a black screen on startup. 
 
+If you have an older 600/700 series GPU (Kepler, Quadro), you will need to use the X11 session alongside the older 470 Nvidia driver (Setup covered in steps). Meaning Gnome 49 or later will NOT be an option and you must use KDE or any other Window Manager supporting X11. [THIS NEEDS ADDITIONAL RESEARCH SO IF IT IS INCORRECT PLEASE INFORM ME BY CREATING AN ISSUE IN THE REPOSITORY].
+
 ## 1. Preparation
 
 * **Update your system:** Ensure your installation is up-to-date:
@@ -129,23 +131,19 @@ sudo dnf install akmod-nvidia
 sudo dnf install xorg-x11-drv-nvidia-cuda #for cuda and nvidia-smi
 ```
 
-## For legacy GeForce 600/700 series (Kepler):
+## For legacy GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
 
 ```bash
 sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
 sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
 ```
-Additionally, for this driver (Geforce 600/700 series ONLY!) you need to install X11 session if you are on Gnome or KDE:
+Additionally, for this driver (DRIVER v470 ONLY) you need to install X11 session on KDE:
 
-Gnome:
-```bash
-sudo dnf install gnome-session-xsession xorg-x11-drivers xorg-x11-xinit
-```
 KDE:
 ```bash
 sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
-After the final reboot, Make sure to use the X11 session (found bottom right when logging in)
+After the final reboot, Make sure to use the X11 session when logging into KDE (Found bottom left)
 
 ## Final steps
 
@@ -154,7 +152,7 @@ Now that we installed the driver, confirm that it's built or not by running:
 ```bash
 modinfo -F version nvidia
 ```
-In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and retry running the command.
+In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and try running the command again.
 
 When the output is correct then you are finally done with the installation!
 
@@ -163,7 +161,7 @@ When the output is correct then you are finally done with the installation!
 * **Reboot**
 Finally, reboot your system.
 
-If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
+If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
 
 After booting, run the following in the terminal to check your GPU's status:
 
@@ -295,7 +293,7 @@ modinfo -F version nvidia
 ```
 In the output you should see the driver version number.
 
-If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful.
+If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
 
 After booting, run the following in the terminal to check your GPU's status:
 
