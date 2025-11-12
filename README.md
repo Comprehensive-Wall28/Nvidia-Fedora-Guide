@@ -293,6 +293,8 @@ modinfo -F version nvidia
 ```
 In the output you should see the driver version number.
 
+* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
+
 If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
 
 After booting, run the following in the terminal to check your GPU's status:
@@ -344,10 +346,20 @@ add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
 Press CTRL + X then Y then ENTER to save the changes
 
+For Fedora Workstation, KDE and Cosmic spins:
+
 Run the following in terminal:
 ```bash
 sudo dracut --force
 ```
+
+For Fedora Atomic distros (Silverblue, Kinoite and Sway):
+
+Run the following in terminal:
+```bash
+sudo rpm-ostree initramfs --enable
+```
+
 After that you can reboot your system.
 
 **If you faced issues, please create an issue and I will try to help**
