@@ -17,7 +17,7 @@ If enabled, you will need to follow some extra (but simple) steps. Don't disable
 
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
-Please check if your Desktop Environment is compatible with the Nvidia drivers since there are more steps needed for some that may not be listed here. This is not a problem for KDE and Gnome but may be a problem for some of the spins. If you find any, please create an issue with the details.
+Please check if your Desktop Environment is compatible with the Nvidia drivers since there are more steps needed for some that may not be listed here. This is not a problem for KDE, Gnome, Sway and Cosmic but may be a problem for some of the spins. If you find any, please create an issue with the details.
 
 You will mostly need to just copy and paste commands into the terminal. But, make sure to read everything carefully!
 
