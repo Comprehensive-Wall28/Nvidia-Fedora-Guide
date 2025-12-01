@@ -190,6 +190,8 @@ https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollback
 
 Sway users need to perform two extra steps, one is listed in "Identify your system" above and the other is below when adding the kernel arguments. [Notes provided by shdwpunk].
 
+If your drive is encrypted with LUKS, you will need to perform extra steps after installation before reboot.
+
 ## 1. Preparation
 
 * **Update your system:** Ensure your Silverblue installation is up-to-date:
@@ -267,6 +269,8 @@ sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cud
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1 --append=initcall_blacklist=simpledrm_platform_driver_init
 ```
 
+* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
+
 ## 5. Reboot and Enroll the Key. (Key enrollment will happen for Secure Boot enabled only!!)
 
 * **Reboot:**
@@ -292,8 +296,6 @@ Now that we installed the driver, confirm that it's built by running:
 modinfo -F version nvidia
 ```
 In the output you should see the driver version number.
-
-* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
 
 If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
 
@@ -346,21 +348,21 @@ add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
 Press CTRL + X then Y then ENTER to save the changes
 
-For Fedora Workstation, KDE and Cosmic spins:
+*For Fedora Workstation, KDE and Cosmic spins:
 
 Run the following in terminal:
 ```bash
 sudo dracut --force
 ```
+After that you can reboot your system.
 
-For Fedora Atomic distros (Silverblue, Kinoite and Sway):
+*For Fedora Atomic distros (Silverblue, Kinoite and Sway):
 
 Run the following in terminal:
 ```bash
 sudo rpm-ostree initramfs --enable
 ```
-
-After that you can reboot your system.
+After that you can reboot your system and enroll the MOK keys (Return back to final reboot step)
 
 **If you faced issues, please create an issue and I will try to help**
 
