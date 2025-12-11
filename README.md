@@ -348,6 +348,19 @@ add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
 Press CTRL + X then Y then ENTER to save the changes
 
+For Fedora Workstation, KDE and Cosmic spins To ensure the config stays persistant across updates, run:
+```bash
+sudo nano /etc/systemd/system/akmods@.service.d/override.conf
+```
+
+Add the following:
+```text
+[Service]
+ExecStartPost=/usr/bin/systemd-inhibit --mode=block --what=idle:sleep:shutdown --who="akmods" --why="Post-Akmods Dracut Transaction running" /usr/bin/dracut --force --kver %i
+ExecStartPost=/usr/bin/systemd-inhibit --mode=block --what=idle:sleep:shutdown --who="akmods" --why="Post-Akmods Snapper Transaction running" /usr/bin/snapper create --read-only --description "Post-Akmods snapshot"
+```
+Press CTRL + X then Y then ENTER to save the changes
+
 *For Fedora Workstation, KDE and Cosmic spins:
 
 Run the following in terminal:
