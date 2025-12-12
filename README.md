@@ -348,26 +348,13 @@ add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
 Press CTRL + X then Y then ENTER to save the changes
 
-For Fedora Workstation, KDE and Cosmic spins To ensure the config stays persistant across updates, run:
-```bash
-sudo nano /etc/systemd/system/akmods@.service.d/override.conf
-```
-
-Add the following:
-```text
-[Service]
-ExecStartPost=/usr/bin/systemd-inhibit --mode=block --what=idle:sleep:shutdown --who="akmods" --why="Post-Akmods Dracut Transaction running" /usr/bin/dracut --force --kver %i
-ExecStartPost=/usr/bin/systemd-inhibit --mode=block --what=idle:sleep:shutdown --who="akmods" --why="Post-Akmods Snapper Transaction running" /usr/bin/snapper create --read-only --description "Post-Akmods snapshot"
-```
-Press CTRL + X then Y then ENTER to save the changes
-
 *For Fedora Workstation, KDE and Cosmic spins:
 
 Run the following in terminal:
 ```bash
 sudo dracut --force
 ```
-After that you can reboot your system.
+After that you can reboot your system and enroll the MOK keys (Return back to final reboot step)
 
 *For Fedora Atomic distros (Silverblue, Kinoite and Sway):
 
@@ -375,11 +362,13 @@ Run the following in terminal:
 ```bash
 sudo rpm-ostree initramfs --enable
 ```
-After that you can reboot your system and enroll the MOK keys (Return back to final reboot step)
+After that you can reboot your system
 
 **If you faced issues, please create an issue and I will try to help**
 
 **Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
+
+**Consider taking a look at https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5**
 
 # Common Problems
 
