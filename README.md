@@ -32,6 +32,8 @@ Consult the official documentation (Sources listed below) if more information is
 
 This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and Cosmic) and Fedora Atomic (Silverblue, Kinoite and Sway).
 
+For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately). Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise for a better experience you can disable LUKS.
+
 * **Sway Users**
 For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
 
@@ -336,6 +338,8 @@ For more information about this, check the official documentation: https://docs.
 
 * **LUKS-encrypted drives :**
 If your drive is encrypted, you will need to perform the following steps before rebooting.:
+
+Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise, for a smoother experience you can disable LUKS.
 
 In your terminal, run:
 ```bash
