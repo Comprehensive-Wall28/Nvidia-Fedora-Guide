@@ -119,10 +119,10 @@ systemctl reboot
 
 ## 3. Installing the drivers
 
-You will need to identify your GPU to choose which drivers to install. Run this command to find your GPU:
+You will need to identify your GPU to choose which drivers to install. Run this command to find your GPU if you need to confirm:
 
 ```bash
-/sbin/lspci | grep -e VGA
+ lspci -n -n -k | grep -A 2 -e VGA -e 3D^C
 ```
 Accordingly, choose which driver to download below:
 
