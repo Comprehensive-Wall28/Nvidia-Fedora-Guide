@@ -23,7 +23,7 @@ You will mostly need to just copy and paste commands into the terminal. But, mak
 
 If you find any mistake or want to add some missing information, create a pull request with the changes or just create an issue. All help is appreciated!
 
-At the end you will find a quick survey, taking it will help me maintain this guide. Thanks!
+At the end you will find a quick survey, taking it will help me maintain this guide especially if you faced a failure in the installation process. Thanks!
 
 Consult the official documentation (Sources listed below) if more information is needed.
 
