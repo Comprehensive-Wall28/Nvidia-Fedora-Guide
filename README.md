@@ -34,13 +34,13 @@ This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and C
 
 For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately). Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise for a better experience you can disable LUKS.
 
-* **Sway Users**
-For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
-
-```env
-SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"
-WLR_NO_HARDWARE_CURSORS=1
-```
+> [!NOTE]
+> **Sway Users:** For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
+>
+> ```env
+> SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"
+> WLR_NO_HARDWARE_CURSORS=1
+> ```
 
 Please scroll down to the relevant section related to your Fedora installation or choose from table of contents:
 
@@ -95,7 +95,8 @@ sudo dnf install kmodtool akmods mokutil openssl
 ```bash
 sudo kmodgenca -a
 ```
-Note: If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
+> [!NOTE]
+> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Enroll the key in MOK:**
 
@@ -152,7 +153,9 @@ KDE:
 ```bash
 sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
-After the final reboot, Make sure to use the X11 session when logging into KDE (Found bottom left)
+
+> [!IMPORTANT]
+> After the final reboot, make sure to use the **X11 session** when logging into KDE (found bottom left of the login screen).
 
 ## 4. Verify Installation & Reboot
 
@@ -201,8 +204,8 @@ NOTE: If this command fails with \"command not found\", you need to install the 
 Due to Fedora Atomic's immutable nature, we will need to use a "trick" to get the drivers correctly working with Secure Boot. 
 Thanks to CheariX for providing the fix to everyone: https://github.com/CheariX/silverblue-akmods-keys
 
-With Atomic, you can revert easily if anything gets messed up! Please check the official Fedora documentation to learn how you can do so: 
-https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollbacks/
+> [!TIP]
+> With Atomic, you can **revert easily** if anything gets messed up! See the [official Fedora documentation](https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollbacks/) to learn how.
 
 Sway users need to perform two extra steps, one is listed in "Identify your system" above and the other is below when adding the kernel arguments. [Notes provided by shdwpunk].
 
@@ -241,7 +244,8 @@ systemctl reboot
 ```bash
 sudo kmodgenca -a
 ```
-Note: If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
+> [!NOTE]
+> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Import the key:**
 
@@ -334,9 +338,8 @@ NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
 
 ## Important Note (Atomic)
 
-Enabling the RPM fusion repo alone will enable it in a "fixed" state. Meaning after a major Fedora update (42 -> 43) The repos won't be updated!
-
-To optionally (recommended) "unlock", Run the following command:
+> [!TIP]
+> **RPM Fusion Unlock:** Enabling the RPM Fusion repo alone will enable it in a "fixed" state. After a major Fedora update (42 → 43), the repos won't be updated! Run the command below to "unlock" them (recommended).
 
 ```bash
 sudo rpm-ostree update \
@@ -352,7 +355,7 @@ After that, reboot!
 reboot
 ```
 
-For more information about this, check the official documentation: https://docs.fedoraproject.org/en-US/fedora-silverblue/tips-and-tricks/#_enabling_rpm_fusion_repos
+For more information, see the [official documentation](https://docs.fedoraproject.org/en-US/fedora-silverblue/tips-and-tricks/#_enabling_rpm_fusion_repos).
 
 # Encrypted Drives
 
@@ -409,13 +412,17 @@ After completing the steps above, return to the reboot step in your installation
 
 ## Nvidia modules failed to load (on startup)
 
-If you got this message after installation, The secure boot enrollment was not done properly. Please retry the Secureboot steps mentioned for your Fedora installation. 
-No need to reinstall the drivers themselves!
+If you got this message after installation, the Secure Boot enrollment was not done properly. Please retry the Secure Boot steps mentioned for your Fedora installation.
+
+> [!TIP]
+> No need to reinstall the drivers themselves!
 
 ## Black screen after booting up
 
-This means the installed drivers were the incorrect version for your GPU (Was kepler but installed Geforce instead and vice versa)
-If that happens, boot into TTY (reboot and spam CTRL+ALT+F2) and remove the Nvidia packages manually
+This means the installed drivers were the incorrect version for your GPU (was Kepler but installed GeForce instead, or vice versa).
+
+> [!CAUTION]
+> If this happens, boot into TTY by rebooting and pressing `CTRL+ALT+F2` repeatedly, then remove the NVIDIA packages manually:
 
 For workstation and it's spins:
 
@@ -431,25 +438,28 @@ For Atomic desktops:
 rpm-ostree override reset "*nvidia*"
 ```
 
-This can also happen if your drive was encrypted. Try the following:
+> [!CAUTION]
+> **LUKS users:** This can also happen if your drive was encrypted. To recover, follow these steps:
 
 1. Reboot the computer.
-2. When the GRUB menu appears, press e to edit.
-3. Find the line that starts with linux
-4. Remove rhgb and quiet if they are there, go to the very end of that line, and add a space, followed by the number 3.
-5. Press Ctrl+x to boot. This will get you to a text-based login where you can enter the LUKS password and afterwards your Fedora username and password.
+2. When the GRUB menu appears, press `e` to edit.
+3. Find the line that starts with `linux`.
+4. Remove `rhgb` and `quiet` if present, go to the very end of that line, add a space, then add `3`.
+5. Press `Ctrl+X` to boot. This gets you to a text-based login where you can enter the LUKS password, then your Fedora username and password.
 
-After that you need to follow the steps listed here: [LUKS Encrypted drives](#encrypted-drives)
+After that, follow the steps in [LUKS Encrypted Drives](#encrypted-drives).
 
 ## For Atomic users who updated to kernel 6.15 and had the drivers fail
 
-If you installed the drivers and updated to 6.15, you need to add "nova_core" to the blacklist alongside nouveau. 
-Ignore this if it's working properly since it's only for those who followed the steps before I added 
-nova_core to the commands. If you ran the older command run:
+> [!WARNING]
+> If you installed the drivers and updated to kernel 6.15, you need to add `nova_core` to the blacklist alongside `nouveau`. Ignore this if it's working properly—this is only for those who followed the steps before `nova_core` was added to the commands.
+
+If you ran the older command, run:
 
 ```bash
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core
 ```
+
 This should fix the issue with the drivers.
 
 # Contributers
