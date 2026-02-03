@@ -171,8 +171,6 @@ In the output you should see the driver version number (e.g., `570.xx.xx`).
 >
 > To monitor the build progress, run: `journalctl --follow --grep=akmod`
 
-When the output shows the driver version, you are ready to reboot!
-
 > [!IMPORTANT]
 > **LUKS Encrypted Drives:** If your drive is encrypted, you **MUST** complete the steps in [LUKS Encrypted Drives](#encrypted-drives) **BEFORE** rebooting, or you may get a black screen on startup.
 
