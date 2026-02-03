@@ -49,10 +49,12 @@ Please scroll down to the relevant section related to your Fedora installation o
 1.  [Fedora Workstation & KDE (with spins)](#installing-nvidia-drivers-on-fedora-workstation-and-its-spins)
 
 2.  [Fedora Atomic (Silverblue, Kinoite and Sway)](#installing-nvidia-drivers-on-fedora-atomic)
-   
-3.  [Common Problems](#common-problems)
 
-4.  [Sources](#sources)
+3.  [LUKS Encrypted Drives](#encrypted-drives)
+   
+4.  [Common Problems](#common-problems)
+
+5.  [Sources](#sources)
 ---
 
 # Installing NVIDIA drivers on Fedora Workstation and it's spins
@@ -105,6 +107,11 @@ sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 
 * **Reboot to enroll:**
 
+> [!WARNING]
+> **Display on NVIDIA-only systems:** The MOK enrollment screen may not appear if your monitor is connected only to the NVIDIA GPU. Workaround: Temporarily connect your monitor to your motherboard's integrated graphics, or press these keys blindly: `↓` (select Enroll MOK) → `Enter` → `↓` (Continue) → `Enter` → `↓` (Yes) → `Enter` → type your password → `Enter` → `Enter` (Reboot).
+>
+> **Note:** The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout.
+
 On the next boot MOK Management is launched and you have to choose "Enroll MOK" (MOK management is a blue screen on startup)
 
 Choose "Continue" to enroll the key.
@@ -122,7 +129,7 @@ systemctl reboot
 You will need to identify your GPU to choose which drivers to install. Run this command to find your GPU if you need to confirm:
 
 ```bash
- lspci -n -n -k | grep -A 2 -e VGA -e 3D^C
+lspci | grep -iE 'VGA|3D|nvidia'
 ```
 Accordingly, choose which driver to download below:
 
@@ -130,7 +137,7 @@ Accordingly, choose which driver to download below:
 
 ```bash
 sudo dnf install akmod-nvidia
-sudo dnf install xorg-x11-drv-nvidia-cuda #for cuda and nvidia-smi
+sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA support
 ```
 
 ## For legacy GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
@@ -147,20 +154,27 @@ sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
 After the final reboot, Make sure to use the X11 session when logging into KDE (Found bottom left)
 
-## Final steps
+## 4. Verify Installation & Reboot
 
-Now that we installed the driver, confirm that it's built or not by running:
+Now that we installed the driver, confirm that it's built by running:
 
 ```bash
 modinfo -F version nvidia
 ```
-In the output you should see the driver version number. If you see an error then it's still being built. Wait for a minute and try running the command again.
+In the output you should see the driver version number (e.g., `570.xx.xx`).
 
-When the output is correct then you are finally done with the installation!
+> [!CAUTION]
+> **Do NOT reboot if you see an error.** If the command returns "modinfo: ERROR: Module nvidia not found", the kernel module is still building. This takes **5-10 minutes** depending on your system. Wait and retry the command until it succeeds before rebooting.
+>
+> To monitor the build progress, run: `journalctl --follow --grep=akmod`
 
-* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
+When the output shows the driver version, you are ready to reboot!
+
+> [!IMPORTANT]
+> **LUKS Encrypted Drives:** If your drive is encrypted, you **MUST** complete the steps in [LUKS Encrypted Drives](#encrypted-drives) **BEFORE** rebooting, or you may get a black screen on startup.
 
 * **Reboot**
+
 Finally, reboot your system.
 
 If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
@@ -170,7 +184,7 @@ After booting, run the following in the terminal to check your GPU's status:
 ```bash
 nvidia-smi
 ```
-NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
+NOTE: If this command fails with \"command not found\", you need to install the CUDA package: `sudo dnf install xorg-x11-drv-nvidia-cuda`
 
 **Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
 
@@ -271,26 +285,32 @@ sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cud
 sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=modprobe.blacklist=nouveau,nova_core --append=nvidia-drm.modeset=1 --append=initcall_blacklist=simpledrm_platform_driver_init
 ```
 
-* **IMPORTANT** If your drive is encrypted, go to the following section to perform some extra required steps before rebooting: [LUKS Encrypted drives](#encrypted-drives)
+> [!IMPORTANT]
+> **LUKS Encrypted Drives:** If your drive is encrypted, you **MUST** complete the steps in [LUKS Encrypted Drives](#encrypted-drives) **BEFORE** rebooting, or you may get a black screen on startup.
 
-## 5. Reboot and Enroll the Key. (Key enrollment will happen for Secure Boot enabled only!!)
+## 5. Reboot and Enroll the Key (Secure Boot only)
 
-* **Reboot:**
-For Secure Boot enabled. Otherwise, you will not see a MOK enrollment screen and you only need to restart!
+> [!WARNING]
+> **Display on NVIDIA-only systems:** The MOK enrollment screen may not appear if your monitor is connected only to the NVIDIA GPU. Workaround: Temporarily connect your monitor to your motherboard's integrated graphics, or press these keys blindly: `↓` (select Enroll MOK) → `Enter` → `↓` (Continue) → `Enter` → `↓` (Yes) → `Enter` → type your password → `Enter` → `Enter` (Reboot).
+>
+> **Note:** The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout.
 
-On the next boot MOK Management is launched and you have to choose "Enroll MOK"
+* 🔄 **Reboot:**
 
-Choose "Continue" to enroll the key.
+For Secure Boot enabled systems, on the next boot MOK Management is launched:
 
-Confirm enrollment by selecting "Yes".
+1. Choose "Enroll MOK"
+2. Choose "Continue" to enroll the key
+3. Confirm enrollment by selecting "Yes"
+4. Enter the password you created earlier
 
-You will need to enter the password you created earlier.
+For Secure Boot disabled: You will not see a MOK enrollment screen - simply restart.
 
 ```bash
 systemctl reboot
 ```
 
-## Final step
+## 6. Verify Installation
 
 Now that we installed the driver, confirm that it's built by running:
 
@@ -336,10 +356,17 @@ For more information about this, check the official documentation: https://docs.
 
 # Encrypted Drives
 
-* **LUKS-encrypted drives :**
-If your drive is encrypted, you will need to perform the following steps before rebooting.:
+## LUKS-encrypted drives
 
-Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise, for a smoother experience you can disable LUKS.
+If your drive is encrypted with LUKS, you **must** perform the following steps **before rebooting** after driver installation.
+
+> [!WARNING]
+> There are reports that these steps get overridden after kernel updates. Please read [issue #5](https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5) for a potential solution and report in the survey how it went. Otherwise, for a smoother experience you can disable LUKS.
+
+### Step 1: Create the dracut configuration
+
+> [!NOTE]
+> The directory `/etc/dracut.conf.d/` should already exist. The command below will create the `nvidia.conf` file if it doesn't exist.
 
 In your terminal, run:
 ```bash
@@ -350,29 +377,33 @@ Add the following line:
 ```text
 add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
 ```
-Press CTRL + X then Y then ENTER to save the changes
+Press `CTRL + X` then `Y` then `ENTER` to save the changes.
 
-*For Fedora Workstation, KDE and Cosmic spins:
+### Step 2: Regenerate initramfs
+
+#### For Fedora Workstation, KDE and Cosmic spins:
 
 Run the following in terminal:
 ```bash
 sudo dracut --force
 ```
-After that you can reboot your system and enroll the MOK keys (Return back to final reboot step)
 
-*For Fedora Atomic distros (Silverblue, Kinoite and Sway):
+#### For Fedora Atomic distros (Silverblue, Kinoite and Sway):
 
 Run the following in terminal:
 ```bash
 sudo rpm-ostree initramfs --enable
 ```
-After that you can reboot your system
 
-**If you faced issues, please create an issue and I will try to help**
+### Step 3: Reboot
 
-**Please take this quick survey to help me know if the guide worked or didn't work for you:** https://forms.gle/J44beNvnPh5x9fHs5
+After completing the steps above, return to the reboot step in your installation section. If you have Secure Boot enabled, MOK key enrollment will occur on reboot for Atomic.
 
-**Consider taking a look at https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5**
+**If you faced issues, please create an issue and I will try to help.**
+
+**Please take this quick survey:** https://forms.gle/J44beNvnPh5x9fHs5
+
+**See also:** [Issue #5 - LUKS steps after kernel updates](https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5)
 
 # Common Problems
 
