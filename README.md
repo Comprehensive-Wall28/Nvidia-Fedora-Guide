@@ -32,7 +32,8 @@ Consult the official documentation (Sources listed below) if more information is
 
 This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and Cosmic) and Fedora Atomic (Silverblue, Kinoite and Sway).
 
-For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately). Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise for a better experience you can disable LUKS.
+> [!NOTE]
+> For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately). Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise for a better experience you can disable LUKS.
 
 > [!NOTE]
 > **Sway Users:** For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
@@ -64,9 +65,11 @@ Please scroll down to the relevant section related to your Fedora installation o
 If you have Secure Boot disabled, Skip step 2.
 Otherwise, it's still easy to get the drivers with Secure Boot. 
 
-If your drive is encrypted with LUKS. You will need to follow some extra steps before final reboot to avoid a black screen on startup. 
+> [!NOTE]
+> If your drive is encrypted with LUKS. You will need to follow some extra steps before final reboot to avoid a black screen on startup.
 
-If you have an older 600/700 series GPU (Kepler, Quadro), you will need to use the X11 session alongside the older 470 Nvidia driver (Setup covered in steps). Meaning Gnome 49 or later will NOT be an option and you must use KDE or any other Window Manager supporting X11. [THIS NEEDS ADDITIONAL RESEARCH SO IF IT IS INCORRECT PLEASE INFORM ME BY CREATING AN ISSUE IN THE REPOSITORY].
+> [!NOTE]
+> If you have an older 600/700 series GPU (Kepler, Quadro), you will need to use the X11 session alongside the older 470 Nvidia driver (Setup covered in steps). Meaning Gnome 49 or later will NOT be an option and you must use KDE or any other Window Manager supporting X11. Please verify that 
 
 ## 1. Preparation
 
@@ -92,11 +95,12 @@ sudo dnf install kmodtool akmods mokutil openssl
 
 * **Generate a default key:**
 
+> [!NOTE]
+> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
+
 ```bash
 sudo kmodgenca -a
 ```
-> [!NOTE]
-> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Enroll the key in MOK:**
 
@@ -106,14 +110,12 @@ After running the command, you will be asked for a password. Create a short pass
 sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 ```
 
-* **Reboot to enroll:**
+* ** 🔄 Reboot to enroll:**
 
 > [!WARNING]
-> **Display on NVIDIA-only systems:** The MOK enrollment screen may not appear if your monitor is connected only to the NVIDIA GPU. Workaround: Temporarily connect your monitor to your motherboard's integrated graphics, or press these keys blindly: `↓` (select Enroll MOK) → `Enter` → `↓` (Continue) → `Enter` → `↓` (Yes) → `Enter` → type your password → `Enter` → `Enter` (Reboot).
->
-> **Note:** The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout.
+> The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout. Use a simple password like 0000.
 
-On the next boot MOK Management is launched and you have to choose "Enroll MOK" (MOK management is a blue screen on startup)
+On the next boot MOK Management is launched, press enter then you have to choose "Enroll MOK" (MOK management is a blue screen on startup)
 
 Choose "Continue" to enroll the key.
 
@@ -155,7 +157,7 @@ sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
 
 > [!IMPORTANT]
-> After the final reboot, make sure to use the **X11 session** when logging into KDE (found bottom left of the login screen).
+> After the final reboot, make sure to use the **X11 session** when logging into KDE (Legacy driver only!) (found bottom left of the login screen).
 
 ## 4. Verify Installation & Reboot
 
@@ -205,9 +207,11 @@ Thanks to CheariX for providing the fix to everyone: https://github.com/CheariX/
 > [!TIP]
 > With Atomic, you can **revert easily** if anything gets messed up! See the [official Fedora documentation](https://docs.fedoraproject.org/en-US/fedora-silverblue/updates-upgrades-rollbacks/) to learn how.
 
-Sway users need to perform two extra steps, one is listed in "Identify your system" above and the other is below when adding the kernel arguments. [Notes provided by shdwpunk].
+> [!NOTE]
+> Sway users need to perform two extra steps, one is listed in "Identify your system" above and the other is below when adding the kernel arguments. [Notes provided by shdwpunk].
 
-If your drive is encrypted with LUKS, you will need to perform extra steps after installation before reboot.
+> [!NOTE]
+> If your drive is encrypted with LUKS. You will need to follow some extra steps before final reboot to avoid a black screen on startup.
 
 ## 1. Preparation
 
@@ -239,19 +243,19 @@ systemctl reboot
 
 * **Generate a Machine Owner Key (MOK):**
 
+> [!NOTE]
+> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 ```bash
 sudo kmodgenca -a
 ```
-> [!NOTE]
-> If you get the message: "WARNING: EXISTING KEY PAIR.", add `--force` to the end of the command and run it again.
 
 * **Import the key:**
+
+After running the command, you will be asked for a password. Create a short password (ex: 0000) and remember it for a later step!
 
 ```bash
 sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 ```
-
-*   You'll be prompted to set a password during this process; remember it! You'll need it after rebooting.
 
 ## 3. Install `akmods-keys` (Secure Boot enabled only!)
 
@@ -293,13 +297,11 @@ sudo rpm-ostree kargs --append=rd.driver.blacklist=nouveau,nova_core --append=mo
 ## 5. Reboot and Enroll the Key (Secure Boot only)
 
 > [!WARNING]
-> **Display on NVIDIA-only systems:** The MOK enrollment screen may not appear if your monitor is connected only to the NVIDIA GPU. Workaround: Temporarily connect your monitor to your motherboard's integrated graphics, or press these keys blindly: `↓` (select Enroll MOK) → `Enter` → `↓` (Continue) → `Enter` → `↓` (Yes) → `Enter` → type your password → `Enter` → `Enter` (Reboot).
->
-> **Note:** The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout.
+> The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout.
 
 * 🔄 **Reboot:**
 
-For Secure Boot enabled systems, on the next boot MOK Management is launched:
+For Secure Boot enabled systems, on the next boot MOK Management is launched press Enter then:
 
 1. Choose "Enroll MOK"
 2. Choose "Continue" to enroll the key
@@ -321,14 +323,16 @@ modinfo -F version nvidia
 ```
 In the output you should see the driver version number.
 
-If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
+> [!NOTE]
+> If you see "Nvidia modules failed to load" on startup, then the secure boot step was unsuccessful. You can try and disable secure boot to solve this problem.
 
 After booting, run the following in the terminal to check your GPU's status:
 
 ```bash
 nvidia-smi
 ```
-NOTE: If it failed then you didn't install Nvidia Cuda from the steps above.
+> [!NOTE]
+> If it failed then you didn't install Nvidia Cuda from the steps above.
 
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
