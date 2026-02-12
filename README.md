@@ -137,8 +137,7 @@ Accordingly, choose which driver to download below:
 ## For NVIDIA GPUs from 2014 or higher (Current GeForce, Quadro and Tesla):
 
 ```bash
-sudo dnf install akmod-nvidia
-sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA support
+sudo dnf install cuda-drivers
 ```
 
 ## For legacy GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
