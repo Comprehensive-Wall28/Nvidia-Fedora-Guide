@@ -1,4 +1,4 @@
-# NVIDIA on Fedora desktops
+
 
 This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and Cosmic spins) and Atomic desktops (Silverblue, Kinoite and Sway).
 
@@ -86,6 +86,8 @@ sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-releas
 ```
 
 ## 2. Secure Boot key enrollment
+> [!TIP]
+> If you have Secure Boot disabled, Skip this step. Proceed directly to Step 3.
 
 * **Install these packages:**
 
@@ -110,7 +112,11 @@ After running the command, you will be asked for a password. Create a short pass
 sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 ```
 
-* ** 🔄 Reboot to enroll:**
+* Reboot to enroll
+
+```bash
+sudo reboot
+```
 
 > [!WARNING]
 > The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout. Use a simple password like 0000.
@@ -136,28 +142,53 @@ lspci | grep -iE 'VGA|3D|nvidia'
 ```
 Accordingly, choose which driver to download below:
 
-## For NVIDIA GPUs from 2014 or higher (Current GeForce, Quadro and Tesla):
+## For NVIDIA GPUs from 2014 or higher (Current GeForce RTX/GTX, Quadro and Tesla):
 
 ```bash
 sudo dnf install akmod-nvidia
 sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA support
 ```
+>[!NOTE]
+>Some GTX 700 series like GTX 750Ti, GTX 750 and GTX 745 use newer Maxwell architecture, and hence uses the current driver.
+>Any NVIDIA GPU starting from the GTX 900, GTX 10, RTX 20, GTX 16, RTX 30, RTX 40 uses this driver.
+>You can use this driver in Quadro GPUs like RTX A6000, RTX 8000, RTX 4000, P4000, M2000.
+>and Tesla GPUs like H100, A100, T4, V100, P100, M60.
 
-## For legacy GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
+## For legacy NVIDIA GPUs like GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
 
 ```bash
 sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
 sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
 ```
+>[!NOTE]
+>Any GPUs starting with 'K' are Kepler GPUs and require this legacy driver.
+>Some GTX 700 Series GPUs like GTX 780 Ti, 780, 770, 760 are based on the Older Kepler architecture, therefore require this legacy driver
+>All GTX 600 series GPU require this legacy driver
+
+
 Additionally, for this driver (DRIVER v470 ONLY) you need to install X11 session on KDE:
 
 KDE:
 ```bash
 sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 ```
-
 > [!IMPORTANT]
 > After the final reboot, make sure to use the **X11 session** when logging into KDE (Legacy driver only!) (found bottom left of the login screen).
+
+## For even older NVIDIA GPUs before 2012 like 400/500 series (Fermi) [DRIVER v390]:
+>[!WARNING]
+>It should be noted that v390 is increasingly difficult to run with Fedora 40/41, NVIDIA has abandoned this driver in 2022, and RPM Fusion Maintainers are the ones maintaining it. Which makes it experimental and end-of-line.
+>The Driver also has no support for Wayland, therefore an X11 compatible desktop is required.
+
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-390xx akmod-nvidia-390xx
+sudo dnf install xorg-x11-drv-nvidia-390xx-cuda #cuda support
+```
+>[!INFO]
+>All 400/500 series are based on the Fermi Architecture and use driver v390.
+>Some Non-Standard GPUs from 600/700 series also use the Fermi Architecture.
+>Please make sure to know about your GPU architecture, and if it uses Fermi.
 
 ## 4. Verify Installation & Reboot
 
