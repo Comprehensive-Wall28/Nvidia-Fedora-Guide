@@ -114,10 +114,6 @@ sudo mokutil --import /etc/pki/akmods/certs/public_key.der
 
 * Reboot to enroll
 
-```bash
-sudo reboot
-```
-
 > [!WARNING]
 > The keyboard is mapped to QWERTY in the MOK screen, regardless of your system layout. Use a simple password like 0000.
 
