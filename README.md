@@ -1,4 +1,4 @@
-
+# NVIDIA on Fedora desktops
 
 This guide will help you to install the proprietary NVIDIA drivers replacing the open source Nouveau drivers for both Fedora Workstation (Gnome, KDE and Cosmic spins) and Atomic desktops (Silverblue, Kinoite and Sway).
 
@@ -225,7 +225,7 @@ NOTE: If this command fails with \"command not found\", you need to install the 
 **If you have any problems, check the Common Problems section or create an issue in this repository and I will try to help.**
 
 
-//------------------------------------------------------------------------------------------//
+------------------------------------------------------------------------------------------
 
 
 # Installing NVIDIA Drivers on Fedora Atomic
