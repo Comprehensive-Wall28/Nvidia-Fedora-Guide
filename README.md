@@ -198,7 +198,7 @@ In the output you should see the driver version number (e.g., `570.xx.xx`).
 > [!CAUTION]
 > **Do NOT reboot if you see an error.** If the command returns "modinfo: ERROR: Module nvidia not found", the kernel module is still building. This takes **5-10 minutes** depending on your system. Wait and retry the command until it succeeds before rebooting.
 >
-> To monitor the build progress, run: `journalctl --follow --grep=akmod`
+> To monitor the build progress, run: `journalctl --follow --grep=akmod` If you dont get a valid output that doesn't mean the installation failed. Wait until the initial command outputs the driver version.
 
 > [!IMPORTANT]
 > **LUKS Encrypted Drives:** If your drive is encrypted, you **MUST** complete the steps in [LUKS Encrypted Drives](#encrypted-drives) **BEFORE** rebooting, or you may get a black screen on startup.
