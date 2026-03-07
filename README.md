@@ -123,7 +123,7 @@ Choose "Continue" to enroll the key.
 
 Enroll by selecting "Yes".
 
-You will need to enter the password you created earlier.
+You will need to enter the password you created earlier. After that select reboot.
 
 ```bash
 systemctl reboot
@@ -333,7 +333,7 @@ For Secure Boot enabled systems, on the next boot MOK Management is launched pre
 1. Choose "Enroll MOK"
 2. Choose "Continue" to enroll the key
 3. Confirm enrollment by selecting "Yes"
-4. Enter the password you created earlier
+4. Enter the password you created earlier.  After that select reboot.
 
 For Secure Boot disabled: You will not see a MOK enrollment screen - simply restart.
 
