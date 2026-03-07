@@ -495,6 +495,7 @@ This should fix the issue with the drivers.
 
 * shdwpunk [Provided additional Sway setup commands]
 * Poid-bit [Provided additional steps for encrypted drives]
+* Sarthak Sidhant [Provided additional information for older GPU drivers]
 
 # Sources
 Configuring RPMFusion:
