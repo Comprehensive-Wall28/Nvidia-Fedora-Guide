@@ -181,7 +181,7 @@ sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 sudo dnf install xorg-x11-drv-nvidia-390xx akmod-nvidia-390xx
 sudo dnf install xorg-x11-drv-nvidia-390xx-cuda #cuda support
 ```
->[!INFO]
+> [!NOTE]
 >All 400/500 series are based on the Fermi Architecture and use driver v390.
 >Some Non-Standard GPUs from 600/700 series also use the Fermi Architecture.
 >Please make sure to know about your GPU architecture, and if it uses Fermi.
