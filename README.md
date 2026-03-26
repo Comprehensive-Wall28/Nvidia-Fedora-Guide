@@ -439,9 +439,15 @@ After completing the steps above, return to the reboot step in your installation
 
 # Common Problems
 
+## NVIDIA-SMI has failed because it couldn’t communicate with the NVIDIA driver. Make sure the latest NVIDIA driver is installed and running
+
+If you get that message when running nvidia-smi, it could be Secure Boot preventing the modules from loading. Try re-doing the Secure Boot steps again or preferably disable Secure Boot and see if it's fixed.
+
+This could also be caused by a version mismatch between the Cuda and main driver packages. If so the main drivers could actually be running and working properly but nvidia-smi can't report it. You can check your system information in the settings and check the reported GPUs. I don't have enough information on why this sometimes happens but it was reported multiple times in form submissions and can be fixed by manually specifying the versions when installing the packages.
+
 ## Nvidia modules failed to load (on startup)
 
-If you got this message after installation, the Secure Boot enrollment was not done properly. Please retry the Secure Boot steps mentioned for your Fedora installation.
+If you got this message after installation, the Secure Boot enrollment was not done properly. Please retry the Secure Boot steps mentioned for your Fedora installation or disable Secure Boot.
 
 > [!TIP]
 > No need to reinstall the drivers themselves!
