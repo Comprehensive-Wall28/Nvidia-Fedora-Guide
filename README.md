@@ -445,6 +445,10 @@ If you get that message when running nvidia-smi, it could be Secure Boot prevent
 
 This could also be caused by a version mismatch between the Cuda and main driver packages. If so the main drivers could actually be running and working properly but nvidia-smi can't report it. You can check your system information in the settings and check the reported GPUs. I don't have enough information on why this sometimes happens but it was reported multiple times in form submissions and can be fixed by manually specifying the versions when installing the packages.
 
+## Nvidia drivers failing due to package version mismatch (Black screen on startup, Nvidia SMI failure and no hardware acceleration)
+
+Check issue 18: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/18
+
 ## Nvidia modules failed to load (on startup)
 
 If you got this message after installation, the Secure Boot enrollment was not done properly. Please retry the Secure Boot steps mentioned for your Fedora installation or disable Secure Boot.
@@ -502,6 +506,7 @@ This should fix the issue with the drivers.
 * shdwpunk [Provided additional Sway setup commands]
 * Poid-bit [Provided additional steps for encrypted drives]
 * Sarthak Sidhant [Provided additional information for older GPU drivers]
+* kw6423 [Details and fix for packages version mismatch from updates]
 
 # Sources
 Configuring RPMFusion:
