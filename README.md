@@ -15,6 +15,9 @@ mokutil --sb-state
 
 If enabled, you will need to follow some extra (but simple) steps. Don't disable Secure Boot if it was already enabled to improve your security. However, if you followed the steps and the driver modules failed to load, disable secure boot to fix the problem.
 
+> [!NOTE]
+> If you are using a hybrid laptop and connect an external monitor to the Nvidia GPU (HDMI), you will experience severe lag on the external display with the Nvidia drivers. You can either use the MUX switch to disable the iGPU or follow the following guide for a workaround after you install the drivers: https://crstl.me/blog/solving-low-fps-on-external-monitor-linux/
+
 All you need to do is follow the guide and *hopefully* everything works smoothly! 
 
 Please check if your Desktop Environment is compatible with the Nvidia drivers since there are more steps needed for some that may not be listed here. This is not a problem for KDE, Gnome, Sway and Cosmic but may be a problem for some of the spins. If you find any, please create an issue with the details.
