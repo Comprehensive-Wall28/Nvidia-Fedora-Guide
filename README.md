@@ -36,7 +36,7 @@ Consult the official documentation (Sources listed below) if more information is
 This guide is made STRICTLY for Fedora Workstation and all it's spins (KDE and Cosmic) and Fedora Atomic (Silverblue, Kinoite and Sway).
 
 > [!NOTE]
-> For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately). Please note that there are reports that these steps get overridden after kernel updates. Please read issue: https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5 for potential solution and report in survey how it went. Otherwise for a better experience you can disable LUKS.
+> For users with encrypted drives using LUKS, you will follow some extra steps after installation to avoid issues after rebooting (steps listed below appropriately).
 
 > [!NOTE]
 > **Sway Users:** For users of Sway and Sway Atomic (Sericea), you will need to open `/etc/sway/environment` and uncomment or add the following two lines:
@@ -395,40 +395,27 @@ For more information, see the [official documentation](https://docs.fedoraprojec
 
 If your drive is encrypted with LUKS, you **must** perform the following steps **before rebooting** after driver installation.
 
-> [!WARNING]
-> There are reports that these steps get overridden after kernel updates. Please read [issue #5](https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5) for a potential solution and report in the survey how it went. Otherwise, for a smoother experience you can disable LUKS.
+### Step 1: Add the plymouth kernel argument
 
-### Step 1: Create the dracut configuration
+Run the following command to tell plymouth to use the simple DRM driver, which ensures the LUKS password prompt appears correctly on boot:
 
-> [!NOTE]
-> The directory `/etc/dracut.conf.d/` should already exist. The command below will create the `nvidia.conf` file if it doesn't exist.
-
-In your terminal, run:
 ```bash
-sudo nano /etc/dracut.conf.d/nvidia.conf
+sudo grubby --update-kernel=ALL --args='plymouth.use-simpledrm=1'
 ```
 
-Add the following line:
-```text
-add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
-```
-Press `CTRL + X` then `Y` then `ENTER` to save the changes.
+### Step 2 (AMD iGPU only): Prevent amdgpu from stealing the framebuffer
 
-### Step 2: Regenerate initramfs
+If you have an AMD CPU with integrated graphics and see a black screen at the LUKS password prompt, the `amdgpu` driver may be claiming the framebuffer before the LUKS prompt can display. To fix this, exclude it from the initramfs:
 
-#### For Fedora Workstation, KDE and Cosmic spins:
-
-Run the following in terminal:
 ```bash
+echo 'omit_drivers+=" amdgpu "' | sudo tee /etc/dracut.conf.d/omit-amdgpu.conf
 sudo dracut --force
 ```
 
-#### For Fedora Atomic distros (Silverblue, Kinoite and Sway):
+After login, the NVIDIA driver takes over as normal.
 
-Run the following in terminal:
-```bash
-sudo rpm-ostree initramfs --enable
-```
+> [!NOTE]
+> Only run Step 2 if you have an AMD iGPU and experience a black screen at the LUKS prompt. Intel iGPU users experiencing the same issue can substitute `amdgpu` with `i915`.
 
 ### Step 3: Reboot
 
@@ -437,8 +424,6 @@ After completing the steps above, return to the reboot step in your installation
 **If you faced issues, please create an issue and I will try to help.**
 
 **Please take this quick survey:** https://forms.gle/J44beNvnPh5x9fHs5
-
-**See also:** [Issue #5 - LUKS steps after kernel updates](https://github.com/Comprehensive-Wall28/Nvidia-Fedora-Guide/issues/5)
 
 # Common Problems
 
