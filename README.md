@@ -442,7 +442,7 @@ You **must** run the command below that matches your system type to apply the ne
 > **Atomic Users:** After enabling this, your next reboot and all future system updates will take a few minutes longer as the system builds a custom boot image tailored to your hardware.
 
 #### Step 5: Reboot
-Once the command in Step 3 finishes, you can safely reboot. If Secure Boot is enabled, follow the MOK enrollment steps upon restarting.
+Once the command in Step 4 finishes, you can safely reboot. If Secure Boot is enabled, follow the MOK enrollment steps upon restarting.
 
 **If you faced issues, please create an issue and I will try to help.**
 
