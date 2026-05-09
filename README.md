@@ -422,7 +422,12 @@ Force-load Nvidia:
 printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' | sudo tee /etc/dracut.conf.d/nvidia.conf
 ```
 
-### Step 3: AMD iGPU Only (Optional): If you have an AMD CPU with integrated graphics, prevent it from "stealing" the display before Nvidia takes over:
+### Step 3: iGPU Only (Optional): If you have a CPU with integrated graphics and are on Desktop, prevent it from "stealing" the display before Nvidia takes over:
+
+>[!CAUTION]
+>**Laptop Users:** **SKIP THIS STEP.** Most laptops route their internal screen through the integrated Intel or AMD graphics (Optimus/Hybrid). If you omit the iGPU driver, your screen will remain black because the >NVIDIA card has no "path" to the display.
+>
+>**Desktop Users:** If your monitor is plugged directly into the NVIDIA GPU and you want to prevent the iGPU from interfering, you may run:
 
 ```bash
 echo 'omit_drivers+=" amdgpu "' | sudo tee /etc/dracut.conf.d/omit-amdgpu.conf
