@@ -141,17 +141,14 @@ lspci | grep -iE 'VGA|3D|nvidia'
 ```
 Accordingly, choose which driver to download below:
 
-## For NVIDIA GPUs from 2014 or higher (Current GeForce RTX/GTX, Quadro and Tesla):
+## For NVIDIA GPUs from 2017 or later (Current GeForce/Quadro/Tesla):
+>[!NOTE]
+>Since driver v590 and later on Fedora 44, support for GTX 800/900/10 were dropped and need to use the v580 drivers listed below this one. Please confirm compatibility.
 
 ```bash
 sudo dnf install akmod-nvidia
 sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA support
 ```
->[!NOTE]
->Some GTX 700 series like GTX 750Ti, GTX 750 and GTX 745 use newer Maxwell architecture, and hence uses the current driver.
->Any NVIDIA GPU starting from the GTX 900, GTX 10, RTX 20, GTX 16, RTX 30, RTX 40 uses this driver.
->You can use this driver in Quadro GPUs like RTX A6000, RTX 8000, RTX 4000, P4000, M2000.
->and Tesla GPUs like H100, A100, T4, V100, P100, M60.
 
 ## For Legacy GTX 800/900/10 (After Fedora 44)
 >[!NOTE]
@@ -159,20 +156,20 @@ sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA sup
 
 ```bash
 sudo dnf install xorg-x11-drv-nvidia-580xx akmod-nvidia-580xx
-sudo dnf install xorg-x11-drv-nvidia-580xx-cuda #optional for cuda
+sudo dnf install xorg-x11-drv-nvidia-580xx-cuda # Required for nvidia-smi and CUDA support
 ```
 
 ## For legacy NVIDIA GPUs like GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
-
-```bash
-sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
-sudo dnf install xorg-x11-drv-nvidia-470xx-cuda #cuda support
-```
 >[!NOTE]
 >Any GPUs starting with 'K' are Kepler GPUs and require this legacy driver.
 >Some GTX 700 Series GPUs like GTX 780 Ti, 780, 770, 760 are based on the Older Kepler architecture, therefore require this legacy driver
 >All GTX 600 series GPU require this legacy driver
 
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-470xx akmod-nvidia-470xx
+sudo dnf install xorg-x11-drv-nvidia-470xx-cuda # Required for nvidia-smi and CUDA support
+```
 
 Additionally, for this driver (DRIVER v470 ONLY) you need to install X11 session on KDE:
 
@@ -188,15 +185,15 @@ sudo dnf install plasma-workspace-x11 xorg-x11-drivers xorg-x11-xinit
 >It should be noted that v390 is increasingly difficult to run with Fedora 40/41, NVIDIA has abandoned this driver in 2022, and RPM Fusion Maintainers are the ones maintaining it. Which makes it experimental and end-of-line.
 >The Driver also has no support for Wayland, therefore an X11 compatible desktop is required.
 
-
-```bash
-sudo dnf install xorg-x11-drv-nvidia-390xx akmod-nvidia-390xx
-sudo dnf install xorg-x11-drv-nvidia-390xx-cuda #cuda support
-```
 > [!NOTE]
 >All 400/500 series are based on the Fermi Architecture and use driver v390.
 >Some Non-Standard GPUs from 600/700 series also use the Fermi Architecture.
 >Please make sure to know about your GPU architecture, and if it uses Fermi.
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-390xx akmod-nvidia-390xx
+sudo dnf install xorg-x11-drv-nvidia-390xx-cuda # Required for nvidia-smi and CUDA support
+```
 
 ## 4. Verify Installation & Reboot
 
