@@ -153,6 +153,15 @@ sudo dnf install xorg-x11-drv-nvidia-cuda # Required for nvidia-smi and CUDA sup
 >You can use this driver in Quadro GPUs like RTX A6000, RTX 8000, RTX 4000, P4000, M2000.
 >and Tesla GPUs like H100, A100, T4, V100, P100, M60.
 
+## For Legacy GTX 800/900/10 (After Fedora 44)
+>[!NOTE]
+>This driver is suitable for any NVIDIA Maxwell and Pascal GPU found between 2014 and 2017 
+
+```bash
+sudo dnf install xorg-x11-drv-nvidia-580xx akmod-nvidia-580xx
+sudo dnf install xorg-x11-drv-nvidia-580xx-cuda #optional for cuda
+```
+
 ## For legacy NVIDIA GPUs like GeForce 600/700 series (Kepler, Quadro) [DRIVER v470]:
 
 ```bash
@@ -498,6 +507,15 @@ rpm-ostree override reset "*nvidia*"
 5. Press `Ctrl+X` to boot. This gets you to a text-based login where you can enter the LUKS password, then your Fedora username and password.
 
 After that, follow the steps in [LUKS Encrypted Drives](#encrypted-drives).
+
+## For users running GTX 800/900/10 and updated to Fedora 44, you need to downgrade your driver version to 580 as 590 dropped support
+
+```bash
+sudo dnf update
+sudo dnf remove xorg-x11-drv-nvidia\* akmod-nvidia\*
+sudo dnf install akmod-nvidia-580xx xorg-x11-drv-nvidia-580xx
+sudo dnf install xorg-x11-drv-nvidia-580xx-cuda
+```
 
 ## For Atomic users who updated to kernel 6.15 and had the drivers fail
 
