@@ -84,6 +84,9 @@ sudo dnf update
 
 * **Enable RPM Fusion:** This provides access to the NVIDIA drivers.
 
+> [!TIP]
+> If for whatever reason you get a 404 / Error, you can download the configuration file from https://rpmfusion.org/Configuration
+
 ```bash
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 ```
@@ -264,7 +267,8 @@ sudo rpm-ostree install rpmdevtools akmods
 ```
 
 * **Enable RPM Fusion:** This provides access to the NVIDIA drivers.
-
+> [!TIP]
+> If for whatever reason you get a 404 / Error, you can download the configuration file from https://rpmfusion.org/Configuration
 ```bash
 sudo rpm-ostree install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 ```
