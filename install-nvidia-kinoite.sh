@@ -52,21 +52,22 @@ detect_system() {
     [[ "${ID:-}" == "fedora" ]] ||
         die "This script requires Fedora."
 
-    [[ "${VARIANT_ID:-}" == "kinoite" ]] ||
-        die "This script is intended for Fedora Kinoite only. Detected: ${VARIANT_ID:-unknown}"
-
     command -v rpm-ostree >/dev/null 2>&1 ||
-        die "rpm-ostree was not found. This does not appear to be an Atomic Fedora system."
+        die "rpm-ostree was not found."
+
+    if [[ ! -e /run/ostree-booted ]]; then
+        die "This does not appear to be a Fedora Atomic/rpm-ostree system."
+    fi
 
     FEDORA_VERSION="$(rpm -E %fedora)"
 
-    if [[ "$FEDORA_VERSION" =~ ^[0-9]+$ ]]; then
-        :
-    else
+    [[ "$FEDORA_VERSION" =~ ^[0-9]+$ ]] ||
         die "Could not determine the Fedora release."
-    fi
 
-    log "Detected Fedora Kinoite ${FEDORA_VERSION}"
+    FEDORA_VARIANT="${VARIANT_ID:-${VARIANT:-unknown}}"
+
+    log "Detected Fedora Atomic variant: ${FEDORA_VARIANT}"
+    log "Detected Fedora release: ${FEDORA_VERSION}"
 }
 
 detect_secure_boot() {
@@ -262,8 +263,7 @@ EOF
 }
 
 install_akmods_keys() {
-    # This is not Secure Boot enrollment. It installs the Atomic akmods helper
-    # used by the guide for reliable akmods handling on immutable Fedora systems.
+    # This is not Secure Boot enrollment. It installs the Atomic akmods helper used by the guide for reliable akmods handling on immutable Fedora systems.
     log "Installing the Atomic akmods helper."
 
     rm -rf "$KEYS_REPO_DIR"
@@ -331,9 +331,7 @@ configure_luks_initramfs() {
     printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' |
         sudo tee /etc/dracut.conf.d/nvidia.conf >/dev/null
 
-    # Do not omit i915 or amdgpu automatically. On laptops, the internal
-    # display commonly depends on the integrated GPU. On desktops, the
-    # monitor may also be connected to the motherboard output.
+    # Do not omit i915 or amdgpu automatically. On laptops, the internal display commonly depends on the integrated GPU. On desktops, the monitor may also be connected to the motherboard output.
     if [[ "$CPU_VENDOR" == "Intel" || "$CPU_VENDOR" == "AMD" ]]; then
         log "Integrated GPU driver is ${IGPU_DRIVER}; it will be retained."
     fi
