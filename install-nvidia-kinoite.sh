@@ -201,9 +201,9 @@ detect_gpu() {
     log "Selected NVIDIA package branch: ${NVIDIA_PACKAGE_SUFFIX}"
 
     if [[ "$GPU_FAMILY" == "fermi" ]]; then
-        warn "Fermi support is experimental/end-of-life and may not work on modern Kinoite releases."
+        warn "Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
     elif [[ "$GPU_FAMILY" == "kepler" ]]; then
-        warn "Kepler requires X11; KDE Plasma Wayland is not suitable for this legacy driver."
+        warn "Kepler requires X11; Wayland is not suitable for this legacy driver."
     fi
 }
 
