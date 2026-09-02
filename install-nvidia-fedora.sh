@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-STATE_DIR="${HOME}/.cache/install-nvidia-fedora"
+STATE_DIR="${HOME}/.cache/fedora-atomic-nvidia-installer"
 PHASE_FILE="${STATE_DIR}/phase"
+CONFIG_FILE="${STATE_DIR}/config"
 KEYS_REPO_DIR="${STATE_DIR}/silverblue-akmods-keys"
 
 mkdir -p "$STATE_DIR"
@@ -21,8 +22,7 @@ die() {
 }
 
 require_command() {
-    command -v "$1" >/dev/null 2>&1 ||
-        die "Required command not found: $1"
+    command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
 }
 
 sudo_available() {
@@ -41,53 +41,77 @@ set_phase() {
     printf '%s\n' "$1" > "$PHASE_FILE"
 }
 
-reboot_now() {
-    log "Rebooting into the new Fedora deployment."
-    systemctl reboot
+prompt_reboot() {
+    local message="${1:-Reboot is required to proceed.}"
+    log "$message"
+    read -rp "Do you want to reboot now? [Y/n]: " choice
+    case "${choice,,}" in
+        n|no)
+            log "Reboot aborted. Please reboot manually, then rerun this script."
+            exit 0
+            ;;
+        *)
+            log "Rebooting system..."
+            systemctl reboot
+            ;;
+    esac
 }
 
 detect_system() {
+    [[ -f /etc/os-release ]] || die "/etc/os-release not found."
     source /etc/os-release
 
-    [[ "${ID:-}" == "fedora" ]] ||
-        die "This script requires Fedora."
-
-    command -v rpm-ostree >/dev/null 2>&1 ||
-        die "rpm-ostree was not found."
+    [[ "${ID:-}" == "fedora" ]] || die "This script requires Fedora Atomic."
+    command -v rpm-ostree >/dev/null 2>&1 || die "rpm-ostree was not found."
 
     if [[ ! -e /run/ostree-booted ]]; then
-        die "This does not appear to be a Fedora Atomic/rpm-ostree system."
+        die "This does not appear to be an active Fedora Atomic/rpm-ostree deployment."
     fi
 
     FEDORA_VERSION="$(rpm -E %fedora)"
-
-    [[ "$FEDORA_VERSION" =~ ^[0-9]+$ ]] ||
-        die "Could not determine the Fedora release."
+    [[ "$FEDORA_VERSION" =~ ^[0-9]+$ ]] || die "Could not determine Fedora release version."
 
     FEDORA_VARIANT="${VARIANT_ID:-${VARIANT:-unknown}}"
+    log "Detected Fedora Atomic Variant: ${FEDORA_VARIANT} (Release ${FEDORA_VERSION})"
+}
 
-    log "Detected Fedora Atomic variant: ${FEDORA_VARIANT}"
-    log "Detected Fedora release: ${FEDORA_VERSION}"
+is_sway_variant() {
+    [[ "${FEDORA_VARIANT,,}" =~ (sway|sericea) ]]
 }
 
 detect_secure_boot() {
-    SECURE_BOOT="unknown"
-
+    SECURE_BOOT="disabled"
     if command -v mokutil >/dev/null 2>&1; then
         if mokutil --sb-state 2>/dev/null | grep -qi enabled; then
             SECURE_BOOT="enabled"
-            warn "Secure Boot is enabled. Secure Boot enrollment is intentionally omitted."
-            warn "The NVIDIA modules may not load until you handle module signing separately."
-            # Enable script progress once Secure Boot support is estabilished.
-            die "At this time install script doesn't support automation for Secure Boot enabled systems."
-        elif mokutil --sb-state 2>/dev/null | grep -qi disabled; then
-            SECURE_BOOT="disabled"
         fi
     fi
+    log "Secure Boot status: ${SECURE_BOOT}"
+}
+
+detect_luks() {
+    HAS_LUKS="no"
+    if lsblk -rno FSTYPE 2>/dev/null | grep -Eiq '^(crypto_LUKS|luks)$'; then
+        HAS_LUKS="yes"
+    fi
+    log "LUKS encryption detected: ${HAS_LUKS}"
+}
+
+detect_laptop() {
+    IS_LAPTOP="no"
+    local chassis
+    chassis="$(hostnamectl chassis 2>/dev/null || true)"
+    case "${chassis,,}" in
+        laptop|notebook|convertible|tablet)
+            IS_LAPTOP="yes"
+            ;;
+    esac
+    log "Laptop hardware: ${IS_LAPTOP}"
 }
 
 detect_cpu() {
     CPU_VENDOR="unknown"
+    IGPU_DRIVER=""
 
     if grep -qi 'GenuineIntel' /proc/cpuinfo; then
         CPU_VENDOR="Intel"
@@ -95,210 +119,127 @@ detect_cpu() {
         CPU_VENDOR="AMD"
     fi
 
-    log "Detected CPU vendor: ${CPU_VENDOR}"
-
-    if [[ "$CPU_VENDOR" == "Intel" ]]; then
-        IGPU_DRIVER="i915"
-    elif [[ "$CPU_VENDOR" == "AMD" ]]; then
-        IGPU_DRIVER="amdgpu"
-    else
-        IGPU_DRIVER=""
-    fi
-}
-
-detect_laptop() {
-    IS_LAPTOP="no"
-
-    local chassis_type=""
-    if [[ -r /sys/class/dmi/id/chassis_type ]]; then
-        chassis_type="$(cat /sys/class/dmi/id/chassis_type)"
-    fi
-
-    case "$chassis_type" in
-        8|9|10|11|12|14)
-            IS_LAPTOP="yes"
-            ;;
-    esac
-
-    if [[ "$IS_LAPTOP" == "yes" ]]; then
-        log "Detected laptop hardware."
-    else
-        log "Detected desktop/non-laptop hardware."
-    fi
-}
-
-detect_luks() {
-    HAS_LUKS="no"
-
-    if lsblk -rno FSTYPE 2>/dev/null |
-        grep -Eiq '^(crypto_LUKS|luks)$'; then
-        HAS_LUKS="yes"
-    fi
-
-    if [[ "$HAS_LUKS" == "yes" ]]; then
-        log "Detected LUKS encryption."
-    else
-        log "No LUKS-encrypted block device detected."
-    fi
-}
-
-detect_gpu() {
-    require_command lspci
-
-    NVIDIA_LINES="$(
-        lspci -nn 2>/dev/null |
-            grep -iE 'NVIDIA|VGA compatible controller|3D controller' |
-            grep -i 'NVIDIA' || true
-    )"
-
-    [[ -n "$NVIDIA_LINES" ]] ||
-        die "No NVIDIA GPU was detected by lspci."
-
-    GPU_NAME="$(
-        printf '%s\n' "$NVIDIA_LINES" |
-            sed -E 's/^.*NVIDIA Corporation ([^[]+).*/\1/' |
-            sed -E 's/[[:space:]]+$//' |
-            head -n1
-    )"
-
-    [[ -n "$GPU_NAME" ]] ||
-        die "Could not determine the NVIDIA GPU model."
-
-    log "Detected NVIDIA GPU: ${GPU_NAME}"
-    echo "Select your GPU architecture"
-    echo "1) Fermi: GeForce 400-500 and common Quadro/Tesla equivalents."
-    echo "   Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
-    echo "2) Kepler: all GeForce 600, most GeForce 700, and Quadro K-series."
-    echo "   Kepler requires X11; Wayland (and therefore Fedora) is not suitable for this legacy driver."
-    echo "3) Maxwell or Pascal: GTX 745 and up to 1xxx series, including TITAN V and X."
-    echo "4) Current GPUs: RTX series 2xxx all the way to 5xxx and onward."
-    select GPU_NAME_CHOICE in "1" "2" "3" "4"; do
-            case $GPU_NAME_CHOICE in
-                "1")
-                    GPU_FAMILY="fermi"
-                    NVIDIA_PACKAGE_SUFFIX="390xx"
-                    break
-                    ;;
-                "2")
-                    GPU_FAMILY="kepler"
-                    NVIDIA_PACKAGE_SUFFIX="470xx"
-                    break
-                    ;;
-                "3")
-                    GPU_FAMILY="maxwell-pascal"
-                    if (( FEDORA_VERSION >= 44 )); then
-                        NVIDIA_PACKAGE_SUFFIX="580xx"
-                    else
-                        NVIDIA_PACKAGE_SUFFIX="current"
-                    fi
-                    break
-                    ;;
-                "4")
-                    GPU_FAMILY="current"
-                    NVIDIA_PACKAGE_SUFFIX="current"
-                    break
-                    ;;
-                *)
-                    echo "Invalid option. Please enter 1, 2, 3, or 4."
-                    ;;
-            esac
-        done
-    log "Selected GPU family: ${GPU_FAMILY}"
-    log "Selected NVIDIA package branch: ${NVIDIA_PACKAGE_SUFFIX}"
-    if [[ "$GPU_FAMILY" == "fermi" ]]; then
-        warn "Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
-    elif [[ "$GPU_FAMILY" == "kepler" ]]; then
-        warn "Kepler requires X11; Wayland is not suitable for this legacy driver."
-    fi
-}
-
-configure_kernel_arguments() {
-    log "Configuring kernel arguments."
-
-    local existing
-    existing="$(rpm-ostree kargs 2>/dev/null || true)"
-
-    local args=(
-        "rd.driver.blacklist=nouveau,nova_core"
-        "modprobe.blacklist=nouveau,nova_core"
-        "nvidia-drm.modeset=1"
-        "plymouth.use-simpledrm=1"
-    )
-
-    # For Sway, add the additional kernel argument
-    if [[ "$FEDORA_VARIANT" == "sway" ]]; then
-        args+=("initcall_blacklist=simpledrm_platform_driver_init")
-    fi
-
-    local arg
-    local pending_args=()
-
-    for arg in "${args[@]}"; do
-        if ! grep -Fq -- "$arg" <<<"$existing"; then
-            pending_args+=("--append=${arg}")
+    # Detect secondary display controllers (VGA = 0300, Display = 0380)
+    local secondary_vga
+    secondary_vga="$(lspci -nn -d 8086::0300 2>/dev/null; lspci -nn -d 8086::0380 2>/dev/null || true)"
+    if [[ -n "$secondary_vga" ]]; then
+        # Check active kernel driver or default to platform standards
+        if lsmod | grep -qw "xe"; then
+            IGPU_DRIVER="xe"
+        else
+            IGPU_DRIVER="i915"
         fi
+    fi
+
+    local secondary_amd
+    secondary_amd="$(lspci -nn -d 1002::0300 2>/dev/null; lspci -nn -d 1002::0380 2>/dev/null || true)"
+    if [[ -n "$secondary_amd" ]]; then
+        IGPU_DRIVER="amdgpu"
+    fi
+
+    log "CPU vendor: ${CPU_VENDOR} (Detected iGPU driver: ${IGPU_DRIVER:-None})"
+}
+
+select_gpu_package() {
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
+        if [[ -n "${NVIDIA_PACKAGE_BRANCH:-}" ]]; then
+            return 0
+        fi
+    fi
+
+    require_command lspci
+    local nvidia_lines
+    nvidia_lines="$(lspci -nn 2>/dev/null | grep -iE 'NVIDIA|VGA compatible controller|3D controller' | grep -i 'NVIDIA' || true)"
+    [[ -n "$nvidia_lines" ]] || die "No NVIDIA GPU detected via lspci."
+
+    local detected_gpu
+    detected_gpu="$(printf '%s\n' "$nvidia_lines" | sed -E 's/^.*NVIDIA Corporation ([^[]+).*/\1/' | head -n1)"
+    log "Detected GPU hardware: ${detected_gpu}"
+
+    echo ""
+    echo "Select your NVIDIA GPU architecture according to the README specifications:"
+    echo "1) Current GPUs: 2017 or later (RTX series 2xxx/3xxx/4xxx/5xxx, modern GTX)"
+    echo "2) Maxwell or Pascal: GTX 800/900/10 series (Uses 580xx branch on Fedora 44+)"
+    echo "3) Kepler: GeForce 600/700 series, Quadro K-series (v470xx; requires X11 session)"
+    echo "4) Fermi: GeForce 400/500 series (v390xx; experimental legacy driver)"
+    echo ""
+
+    local choice
+    while true; do
+        read -rp "Enter choice [1-4]: " choice
+        case "$choice" in
+            1)
+                NVIDIA_PACKAGE_BRANCH="current"
+                break
+                ;;
+            2)
+                if (( FEDORA_VERSION >= 44 )); then
+                    NVIDIA_PACKAGE_BRANCH="580xx"
+                else
+                    NVIDIA_PACKAGE_BRANCH="current"
+                fi
+                break
+                ;;
+            3)
+                NVIDIA_PACKAGE_BRANCH="470xx"
+                warn "Kepler GPUs require an X11 desktop session. Wayland environments are unsupported."
+                break
+                ;;
+            4)
+                NVIDIA_PACKAGE_BRANCH="390xx"
+                warn "Fermi driver (v390) is end-of-life and experimental."
+                break
+                ;;
+            *)
+                echo "Invalid selection. Enter 1, 2, 3, or 4."
+                ;;
+        esac
     done
 
-    if ((${#pending_args[@]} > 0)); then
-        sudo rpm-ostree kargs "${pending_args[@]}"
-    else
-        log "Required kernel arguments are already present."
-    fi
+    printf 'NVIDIA_PACKAGE_BRANCH="%s"\n' "$NVIDIA_PACKAGE_BRANCH" > "$CONFIG_FILE"
+    log "Configured package branch: ${NVIDIA_PACKAGE_BRANCH}"
 }
 
-configure_sway_for_nvidia() {
-    [[ "$FEDORA_VARIANT" == "sway" ]] || return 0
+phase_prepare() {
+    log "Phase 1: Updating system and staging RPM Fusion repositories."
 
-    log "Configuring Sway for NVIDIA GPU compatibility."
-
-    local sway_env_file="/etc/sway/environment"
-
-    # Ensure the file exists and add the required variables
-    sudo mkdir -p "$(dirname "$sway_env_file")"
-    
-    # Check if the variables already exist
-    if ! grep -q "SWAY_EXTRA_ARGS.*--unsupported-gpu" "$sway_env_file" 2>/dev/null; then
-        echo 'SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"' | sudo tee -a "$sway_env_file" >/dev/null
-    fi
-
-    if ! grep -q "WLR_NO_HARDWARE_CURSORS" "$sway_env_file" 2>/dev/null; then
-        echo "WLR_NO_HARDWARE_CURSORS=1" | sudo tee -a "$sway_env_file" >/dev/null
-    fi
-}
-
-install_rpmfusion_and_dependencies() {
-    log "Updating Fedora and installing RPM Fusion plus build dependencies."
     sudo rpm-ostree update
-    sudo rpm-ostree install \
-        rpmdevtools \
-        akmods \
-        git \
+
+    local base_pkgs=("rpmdevtools" "akmods")
+    if [[ "$SECURE_BOOT" == "enabled" ]]; then
+        base_pkgs+=("git")
+    fi
+
+    sudo rpm-ostree install "${base_pkgs[@]}" \
         "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm" \
         "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm"
 
     set_phase "install-driver"
-
-    cat <<'EOF'
-
-The RPM Fusion and akmods deployment has been queued.
-
-Reboot now, then run this same script again:
-
-  ./install-nvidia-fedora.sh
-
-EOF
-
-    reboot_now
+    prompt_reboot "RPM Fusion staging deployment completed."
 }
 
-install_akmods_keys() {
-    # This is not Secure Boot enrollment. It installs the Atomic akmods helper used by the guide for reliable akmods handling on immutable Fedora systems.
-    log "Installing the Atomic akmods helper."
+setup_secure_boot_keys() {
+    [[ "$SECURE_BOOT" == "enabled" ]] || return 0
 
+    log "Configuring Machine Owner Key (MOK) for Secure Boot."
+
+    require_command mokutil
+
+    if ! sudo kmodgenca -a; then
+        warn "Existing key pair warning detected. Re-running with --force."
+        sudo kmodgenca -a --force
+    fi
+
+    echo ""
+    warn "A temporary password is required to import the key into UEFI MOK."
+    warn "Use a simple password (e.g. 0000). On the next boot, the blue MOK screen uses a QWERTY layout."
+    echo ""
+    sudo mokutil --import /etc/pki/akmods/certs/public_key.der
+
+    log "Building and layering silverblue-akmods-keys."
     rm -rf "$KEYS_REPO_DIR"
-    git clone --depth=1 \
-        https://github.com/CheariX/silverblue-akmods-keys.git \
-        "$KEYS_REPO_DIR"
+    git clone --depth=1 https://github.com/CheariX/silverblue-akmods-keys.git "$KEYS_REPO_DIR"
 
     pushd "$KEYS_REPO_DIR" >/dev/null
     sudo bash setup.sh
@@ -307,142 +248,175 @@ install_akmods_keys() {
     local key_rpms=(akmods-keys-*.rpm)
     shopt -u nullglob
 
-    ((${#key_rpms[@]} > 0)) ||
-        die "The akmods-keys build did not produce an RPM."
+    ((${#key_rpms[@]} > 0)) || die "silverblue-akmods-keys failed to produce an RPM package."
 
     sudo rpm-ostree install "${key_rpms[@]}"
     popd >/dev/null
 }
 
-install_nvidia_driver() {
-    log "Installing NVIDIA driver packages."
+install_nvidia_packages() {
+    log "Layering NVIDIA driver packages (${NVIDIA_PACKAGE_BRANCH})."
+    log "Note: akmods kernel module compilation executes synchronously during this rpm-ostree transaction."
 
-    case "$NVIDIA_PACKAGE_SUFFIX" in
+    case "$NVIDIA_PACKAGE_BRANCH" in
         current)
-            sudo rpm-ostree install \
-                akmod-nvidia \
-                xorg-x11-drv-nvidia \
-                xorg-x11-drv-nvidia-cuda
+            sudo rpm-ostree install akmod-nvidia xorg-x11-drv-nvidia xorg-x11-drv-nvidia-cuda
             ;;
-
         580xx)
-            sudo rpm-ostree install \
-                akmod-nvidia-580xx \
-                xorg-x11-drv-nvidia-580xx \
-                xorg-x11-drv-nvidia-580xx-cuda
+            sudo rpm-ostree install akmod-nvidia-580xx xorg-x11-drv-nvidia-580xx xorg-x11-drv-nvidia-580xx-cuda
             ;;
-
         470xx)
-            sudo rpm-ostree install \
-                akmod-nvidia-470xx \
-                xorg-x11-drv-nvidia-470xx \
-                xorg-x11-drv-nvidia-470xx-cuda
+            sudo rpm-ostree install akmod-nvidia-470xx xorg-x11-drv-nvidia-470xx xorg-x11-drv-nvidia-470xx-cuda
             ;;
-
         390xx)
-            sudo rpm-ostree install \
-                akmod-nvidia-390xx \
-                xorg-x11-drv-nvidia-390xx \
-                xorg-x11-drv-nvidia-390xx-cuda
+            sudo rpm-ostree install akmod-nvidia-390xx xorg-x11-drv-nvidia-390xx xorg-x11-drv-nvidia-390xx-cuda
             ;;
-
         *)
-            die "Unknown NVIDIA package branch: $NVIDIA_PACKAGE_SUFFIX"
+            die "Unknown package branch: $NVIDIA_PACKAGE_BRANCH"
             ;;
     esac
 }
 
-configure_luks_initramfs() {
+configure_kernel_arguments() {
+    log "Configuring kernel boot arguments."
+
+    local existing_kargs
+    existing_kargs="$(rpm-ostree kargs 2>/dev/null || true)"
+
+    local required_args=(
+        "rd.driver.blacklist=nouveau,nova_core"
+        "modprobe.blacklist=nouveau,nova_core"
+        "nvidia-drm.modeset=1"
+    )
+
+    if is_sway_variant; then
+        required_args+=("initcall_blacklist=simpledrm_platform_driver_init")
+    fi
+
+    if [[ "$HAS_LUKS" == "yes" ]]; then
+        required_args+=("plymouth.use-simpledrm=1")
+    fi
+
+    local pending_args=()
+    for arg in "${required_args[@]}"; do
+        if ! grep -Fq -- "$arg" <<<"$existing_kargs"; then
+            pending_args+=("--append=${arg}")
+        fi
+    done
+
+    if ((${#pending_args[@]} > 0)); then
+        sudo rpm-ostree kargs "${pending_args[@]}"
+    else
+        log "All designated kernel arguments are already active."
+    fi
+}
+
+configure_sway_environment() {
+    is_sway_variant || return 0
+
+    log "Configuring Sway desktop environment variables."
+    local sway_env="/etc/sway/environment"
+    sudo mkdir -p "$(dirname "$sway_env")"
+
+    if [[ ! -f "$sway_env" ]] || ! grep -qE '^[[:space:]]*SWAY_EXTRA_ARGS=.*--unsupported-gpu' "$sway_env"; then
+        echo 'SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"' | sudo tee -a "$sway_env" >/dev/null
+    fi
+
+    if [[ ! -f "$sway_env" ]] || ! grep -qE '^[[:space:]]*WLR_NO_HARDWARE_CURSORS=1' "$sway_env"; then
+        echo "WLR_NO_HARDWARE_CURSORS=1" | sudo tee -a "$sway_env" >/dev/null
+    fi
+}
+
+configure_luks_dracut() {
     [[ "$HAS_LUKS" == "yes" ]] || return 0
 
-    log "Configuring the initramfs for LUKS."
-    printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' |
+    log "Configuring Dracut and initramfs for LUKS disk encryption."
+    printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' | \
         sudo tee /etc/dracut.conf.d/nvidia.conf >/dev/null
 
-    if [[ "$IS_LAPTOP" == "no" ]]; then
-        echo "If you have a CPU with integrated graphics (iGPU) and are on Desktop,"
-        echo "do you want to prevent it from stealing the display before NVIDIA takes over?"
-        echo "(Only answer yes if your monitor is plugged directly into the NVIDIA GPU"
-        echo "and you want to prevent the iGPU from interfering)"
+    detect_laptop
+    detect_cpu
+
+    if [[ "$IS_LAPTOP" == "no" && -n "$IGPU_DRIVER" ]]; then
         echo ""
-        select iGPU_CHOICE in "y" "n"; do
-            case $iGPU_CHOICE in
-                "y")
-                    printf '%s\n' "omit_drivers+=\" ${IGPU_DRIVER} \"" | sudo tee /etc/dracut.conf.d/omit-igpu.conf >/dev/null
-                    log "iGPU driver (${IGPU_DRIVER}) will be omitted from initramfs."
-                    break
-                    ;;
-                "n")
-                    log "iGPU driver will be retained in initramfs."
-                    break
-                    ;;
-                *)
-                    echo "Invalid option. Please enter 'yes' or 'no'."
-                    ;;
-            esac
-        done
+        echo "Desktop installation with an integrated ${CPU_VENDOR} GPU detected."
+        echo "If your monitor is plugged directly into the NVIDIA discrete GPU, you can"
+        echo "prevent the iGPU (${IGPU_DRIVER}) from interfering with the display during boot."
+        read -rp "Omit ${IGPU_DRIVER} from initramfs? [y/N]: " igpu_choice
+        case "${igpu_choice,,}" in
+            y|yes)
+                printf '%s\n' "omit_drivers+=\" ${IGPU_DRIVER} \"" | \
+                    sudo tee "/etc/dracut.conf.d/omit-${IGPU_DRIVER}.conf" >/dev/null
+                log "Configured omission of ${IGPU_DRIVER} in initramfs."
+                ;;
+            *)
+                log "Retaining ${IGPU_DRIVER} in initramfs."
+                ;;
+        esac
     fi
-    
+
+    log "Enabling client-side initramfs regeneration."
     sudo rpm-ostree initramfs --enable
 }
 
-prepare_driver_deployment() {
-    # install_akmods_keys
-    install_nvidia_driver
+unlock_rpmfusion() {
+    log "Unlocking RPM Fusion repositories for automatic future major release upgrades."
+    sudo rpm-ostree update \
+        --uninstall rpmfusion-free-release \
+        --uninstall rpmfusion-nonfree-release \
+        --install rpmfusion-free-release \
+        --install rpmfusion-nonfree-release
+}
+
+phase_install_driver() {
+    select_gpu_package
+    setup_secure_boot_keys
+    install_nvidia_packages
     configure_kernel_arguments
-    configure_sway_for_nvidia
-    configure_luks_initramfs
+    configure_sway_environment
+    configure_luks_dracut
+    unlock_rpmfusion
 
     set_phase "verify"
 
-    cat <<EOF
+    if [[ "$SECURE_BOOT" == "enabled" ]]; then
+        echo ""
+        log "SECURE BOOT MOK ENROLLMENT REQUIRED UPON REBOOT:"
+        echo "1. The system will start into the blue MOK Management screen."
+        echo "2. Press Enter, then select 'Enroll MOK'."
+        echo "3. Select 'Continue', then choose 'Yes' to confirm enrollment."
+        echo "4. Enter the password configured during this run, then select 'Reboot'."
+        echo ""
+    fi
 
-The NVIDIA driver deployment has been queued.
-
-Detected:
-  GPU:       ${GPU_NAME}
-  GPU class: ${GPU_FAMILY}
-  CPU:       ${CPU_VENDOR}
-  Laptop:    ${IS_LAPTOP}
-  LUKS:      ${HAS_LUKS}
-  SecureBoot: ${SECURE_BOOT}
-  Variant:   ${FEDORA_VARIANT}
-
-Reboot now, then run this same script once more to verify:
-
-  ./install-nvidia-fedora.sh
-
-EOF
-
-    reboot_now
+    prompt_reboot "Driver deployment staged."
 }
 
-verify_installation() {
-    log "Verifying the NVIDIA kernel module."
+phase_verify() {
+    log "Phase 3: Verifying NVIDIA kernel module and driver status."
+
+    if ! grep -qw '^nvidia' /proc/modules; then
+        if [[ "$SECURE_BOOT" == "enabled" ]]; then
+            warn "NVIDIA kernel module is present on disk but not loaded by the kernel."
+            warn "UEFI Secure Boot rejected the signature or MOK enrollment was not completed."
+            die "MOK enrollment failed. Boot into UEFI MOK Manager and enroll the key."
+        else
+            die "NVIDIA kernel module failed to insert. Review 'journalctl -b -k -g nvidia'."
+        fi
+    fi
 
     local version
-    version="$(modinfo -F version nvidia 2>/dev/null || true)"
-
-    if [[ -z "$version" ]]; then
-        warn "The NVIDIA kernel module is not available yet."
-        warn "The akmods build may still be running, or Secure Boot may be blocking it."
-
-        if [[ "$SECURE_BOOT" == "enabled" ]]; then
-            warn "Secure Boot is enabled and this script intentionally did not perform MOK enrollment."
-        fi
-
-        exit 1
-    fi
-
-    printf 'NVIDIA kernel module version: %s\n' "$version"
+    version="$(cat /sys/module/nvidia/version 2>/dev/null || modinfo -F version nvidia 2>/dev/null || echo "Unknown")"
+    log "NVIDIA module loaded successfully (Version: ${version})."
 
     if command -v nvidia-smi >/dev/null 2>&1; then
-        nvidia-smi || warn "nvidia-smi could not communicate with the driver."
+        nvidia-smi
     else
-        warn "nvidia-smi was not found, although the kernel module is installed."
+        warn "nvidia-smi utility was not found. Verify CUDA package installation."
     fi
 
-    log "NVIDIA installation verification completed successfully."
+    rm -f "$PHASE_FILE" "$CONFIG_FILE"
+    log "NVIDIA installation and validation complete."
 }
 
 main() {
@@ -453,26 +427,20 @@ main() {
 
     detect_system
     detect_secure_boot
-    detect_cpu
-    detect_laptop
     detect_luks
-    detect_gpu
 
     case "$(get_phase)" in
         prepare)
-            install_rpmfusion_and_dependencies
+            phase_prepare
             ;;
-
         install-driver)
-            prepare_driver_deployment
+            phase_install_driver
             ;;
-
         verify)
-            verify_installation
+            phase_verify
             ;;
-
         *)
-            die "Unknown installer phase: $(get_phase)"
+            die "Unknown deployment phase: $(get_phase)"
             ;;
     esac
 }
