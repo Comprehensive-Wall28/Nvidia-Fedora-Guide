@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-STATE_DIR="${HOME}/.cache/kinoite-nvidia-installer"
+STATE_DIR="${HOME}/.cache/install-nvidia-fedora"
 PHASE_FILE="${STATE_DIR}/phase"
 KEYS_REPO_DIR="${STATE_DIR}/silverblue-akmods-keys"
 
@@ -42,7 +42,7 @@ set_phase() {
 }
 
 reboot_now() {
-    log "Rebooting into the new Kinoite deployment."
+    log "Rebooting into the new Fedora deployment."
     systemctl reboot
 }
 
@@ -78,6 +78,8 @@ detect_secure_boot() {
             SECURE_BOOT="enabled"
             warn "Secure Boot is enabled. Secure Boot enrollment is intentionally omitted."
             warn "The NVIDIA modules may not load until you handle module signing separately."
+            # Enable script progress once Secure Boot support is estabilished.
+            die "At this time install script doesn't support automation for Secure Boot enabled systems."
         elif mokutil --sb-state 2>/dev/null | grep -qi disabled; then
             SECURE_BOOT="disabled"
         fi
@@ -163,43 +165,46 @@ detect_gpu() {
         die "Could not determine the NVIDIA GPU model."
 
     log "Detected NVIDIA GPU: ${GPU_NAME}"
-
-    # Fermi: GeForce 400/500 and common Quadro/Tesla equivalents.
-    if [[ "$GPU_NAME" =~ (GeForce|Quadro|Tesla).*(4[0-9][0-9]|5[0-9][0-9]) ]]; then
-        GPU_FAMILY="fermi"
-        NVIDIA_PACKAGE_SUFFIX="390xx"
-
-    # Kepler: all GeForce 600, most GeForce 700, and Quadro K-series.
-    elif [[ "$GPU_NAME" =~ GeForce.*(GTX[[:space:]]*)?6[0-9][0-9] ]] ||
-         [[ "$GPU_NAME" =~ GeForce.*GTX[[:space:]]*7[0-9][0-9] &&
-            ! "$GPU_NAME" =~ GTX[[:space:]]*750 ]] ||
-         [[ "$GPU_NAME" =~ Quadro[[:space:]]K ]]; then
-        GPU_FAMILY="kepler"
-        NVIDIA_PACKAGE_SUFFIX="470xx"
-
-    # Maxwell/Pascal GPUs requiring the 580xx branch on Fedora 44 and newer.
-    elif [[ "$GPU_NAME" =~ GTX[[:space:]]*750 ]] ||
-         [[ "$GPU_NAME" =~ GTX[[:space:]]*8[0-9][0-9] ]] ||
-         [[ "$GPU_NAME" =~ GTX[[:space:]]*9[0-9][0-9] ]] ||
-         [[ "$GPU_NAME" =~ GTX[[:space:]]*10[0-9][0-9][0-9] ]] ||
-         [[ "$GPU_NAME" =~ Quadro[[:space:]]M ]]; then
-
-        GPU_FAMILY="maxwell-pascal"
-
-        if (( FEDORA_VERSION >= 44 )); then
-            NVIDIA_PACKAGE_SUFFIX="580xx"
-        else
-            NVIDIA_PACKAGE_SUFFIX="current"
-        fi
-
-    else
-        GPU_FAMILY="current"
-        NVIDIA_PACKAGE_SUFFIX="current"
-    fi
-
+    echo "Select your GPU architecture"
+    echo "1) Fermi: GeForce 400-500 and common Quadro/Tesla equivalents. /n
+    Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
+    echo "2) Kepler: all GeForce 600, most GeForce 700, and Quadro K-series. /n
+    Kepler requires X11; Wayland (and therefor Fedora) is not suitable for this legacy driver."
+    echo "3) Maxwell or Pascal: GTX 745 and up to 1xxx series, including TITAN V and X."
+    echo "4) Current GPUs: RTX series 2xxx all the way to 5xxx and onward."
+    select GPU_NAME_CHOICE in "1" "2" "3" "4"; do
+            case $iGPU_CHOICE in
+                "1")
+                    GPU_FAMILY="fermi"
+                    NVIDIA_PACKAGE_SUFFIX="390xx"
+                    break
+                    ;;
+                "2")
+                    GPU_FAMILY="kepler"
+                    NVIDIA_PACKAGE_SUFFIX="470xx"
+                    break
+                    ;;
+                "3")
+                    GPU_FAMILY="maxwell-pascal"
+                    if (( FEDORA_VERSION >= 44 )); then
+                        NVIDIA_PACKAGE_SUFFIX="580xx"
+                    else
+                        NVIDIA_PACKAGE_SUFFIX="current"
+                    fi
+                    break
+                    ;;
+                "4")
+                    GPU_FAMILY="current"
+                    NVIDIA_PACKAGE_SUFFIX="current"
+                    break
+                    ;;
+                *)
+                    echo "Invalid option. Please enter y/n."
+                    ;;
+            esac
+        done
     log "Selected GPU family: ${GPU_FAMILY}"
     log "Selected NVIDIA package branch: ${NVIDIA_PACKAGE_SUFFIX}"
-
     if [[ "$GPU_FAMILY" == "fermi" ]]; then
         warn "Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
     elif [[ "$GPU_FAMILY" == "kepler" ]]; then
@@ -217,6 +222,8 @@ configure_kernel_arguments() {
         "rd.driver.blacklist=nouveau,nova_core"
         "modprobe.blacklist=nouveau,nova_core"
         "nvidia-drm.modeset=1"
+        "plymouth.use-simpledrm=1"
+        #! "initcall_blacklist=simpledrm_platform_driver_init"
     )
 
     local arg
@@ -236,10 +243,8 @@ configure_kernel_arguments() {
 }
 
 install_rpmfusion_and_dependencies() {
-    log "Updating Kinoite and installing RPM Fusion plus build dependencies."
-
+    log "Updating Fedora and installing RPM Fusion plus build dependencies."
     sudo rpm-ostree update
-
     sudo rpm-ostree install \
         rpmdevtools \
         akmods \
@@ -255,7 +260,7 @@ The RPM Fusion and akmods deployment has been queued.
 
 Reboot now, then run this same script again:
 
-  ./install-nvidia-kinoite.sh
+  ./install-nvidia-fedora.sh
 
 EOF
 
@@ -327,9 +332,30 @@ configure_luks_initramfs() {
     [[ "$HAS_LUKS" == "yes" ]] || return 0
 
     log "Configuring the initramfs for LUKS."
-
     printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' |
         sudo tee /etc/dracut.conf.d/nvidia.conf >/dev/null
+    
+    if [[ "$IS_LAPTOP" == "no" ]]; then
+        echo "If you have a CPU with integrated graphics (iGPU) and are on Desktop,
+        do you want to prevent it from stealing the display before Nvidia takes over?
+        (If your monitor is plugged directly into the NVIDIA GPU instead of Motherboard
+        and you want to prevent the iGPU from interfering)/n y/n:"
+        select choice in "y" "n"; do
+            case $iGPU_CHOICE in
+                "y")
+                    echo 'omit_drivers+=" ${IGPU_DRIVER} "' | sudo tee /etc/dracut.conf.d/omit-amdgpu.conf
+                    break
+                    ;;
+                "n")
+                    break
+                    ;;
+                *)
+                    echo "Invalid option. Please enter y/n."
+                    ;;
+            esac
+        done
+    fi
+    
 
     # Do not omit i915 or amdgpu automatically. On laptops, the internal display commonly depends on the integrated GPU. On desktops, the monitor may also be connected to the motherboard output.
     if [[ "$CPU_VENDOR" == "Intel" || "$CPU_VENDOR" == "AMD" ]]; then
@@ -340,7 +366,8 @@ configure_luks_initramfs() {
 }
 
 prepare_driver_deployment() {
-    install_akmods_keys
+    # !!
+    # install_akmods_keys
     install_nvidia_driver
     configure_kernel_arguments
     configure_luks_initramfs
@@ -361,7 +388,7 @@ Detected:
 
 Reboot now, then run this same script once more to verify:
 
-  ./install-nvidia-kinoite.sh
+  ./install-nvidia-fedora.sh
 
 EOF
 
