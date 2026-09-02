@@ -359,21 +359,20 @@ configure_luks_initramfs() {
     printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' |
         sudo tee /etc/dracut.conf.d/nvidia.conf >/dev/null
 
-    # Only prompt for iGPU omission on desktop systems
-    if [[ "$IS_LAPTOP" == "no" && -n "$IGPU_DRIVER" ]]; then
+    if [[ "$IS_LAPTOP" == "no" ]]; then
         echo "If you have a CPU with integrated graphics (iGPU) and are on Desktop,"
         echo "do you want to prevent it from stealing the display before NVIDIA takes over?"
         echo "(Only answer yes if your monitor is plugged directly into the NVIDIA GPU"
         echo "and you want to prevent the iGPU from interfering)"
         echo ""
-        select choice in "yes" "no"; do
-            case $choice in
-                "yes")
+        select iGPU_CHOICE in "y" "n"; do
+            case $iGPU_CHOICE in
+                "y")
                     printf '%s\n' "omit_drivers+=\" ${IGPU_DRIVER} \"" | sudo tee /etc/dracut.conf.d/omit-igpu.conf >/dev/null
                     log "iGPU driver (${IGPU_DRIVER}) will be omitted from initramfs."
                     break
                     ;;
-                "no")
+                "n")
                     log "iGPU driver will be retained in initramfs."
                     break
                     ;;
@@ -383,17 +382,11 @@ configure_luks_initramfs() {
             esac
         done
     fi
-
-    # Informational log about integrated GPU handling
-    if [[ "$CPU_VENDOR" == "Intel" || "$CPU_VENDOR" == "AMD" ]]; then
-        log "Integrated GPU driver is ${IGPU_DRIVER}."
-    fi
-
+    
     sudo rpm-ostree initramfs --enable
 }
 
 prepare_driver_deployment() {
-    # !!
     # install_akmods_keys
     install_nvidia_driver
     configure_kernel_arguments
