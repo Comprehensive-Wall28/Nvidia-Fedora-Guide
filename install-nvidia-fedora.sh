@@ -166,14 +166,14 @@ detect_gpu() {
 
     log "Detected NVIDIA GPU: ${GPU_NAME}"
     echo "Select your GPU architecture"
-    echo "1) Fermi: GeForce 400-500 and common Quadro/Tesla equivalents. /n
-    Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
-    echo "2) Kepler: all GeForce 600, most GeForce 700, and Quadro K-series. /n
-    Kepler requires X11; Wayland (and therefor Fedora) is not suitable for this legacy driver."
+    echo "1) Fermi: GeForce 400-500 and common Quadro/Tesla equivalents."
+    echo "   Fermi support is experimental/end-of-life and may not work on modern Fedora releases."
+    echo "2) Kepler: all GeForce 600, most GeForce 700, and Quadro K-series."
+    echo "   Kepler requires X11; Wayland (and therefore Fedora) is not suitable for this legacy driver."
     echo "3) Maxwell or Pascal: GTX 745 and up to 1xxx series, including TITAN V and X."
     echo "4) Current GPUs: RTX series 2xxx all the way to 5xxx and onward."
     select GPU_NAME_CHOICE in "1" "2" "3" "4"; do
-            case $iGPU_CHOICE in
+            case $GPU_NAME_CHOICE in
                 "1")
                     GPU_FAMILY="fermi"
                     NVIDIA_PACKAGE_SUFFIX="390xx"
@@ -199,7 +199,7 @@ detect_gpu() {
                     break
                     ;;
                 *)
-                    echo "Invalid option. Please enter y/n."
+                    echo "Invalid option. Please enter 1, 2, 3, or 4."
                     ;;
             esac
         done
@@ -223,8 +223,12 @@ configure_kernel_arguments() {
         "modprobe.blacklist=nouveau,nova_core"
         "nvidia-drm.modeset=1"
         "plymouth.use-simpledrm=1"
-        #! "initcall_blacklist=simpledrm_platform_driver_init"
     )
+
+    # For Sway, add the additional kernel argument
+    if [[ "$FEDORA_VARIANT" == "sway" ]]; then
+        args+=("initcall_blacklist=simpledrm_platform_driver_init")
+    fi
 
     local arg
     local pending_args=()
@@ -239,6 +243,26 @@ configure_kernel_arguments() {
         sudo rpm-ostree kargs "${pending_args[@]}"
     else
         log "Required kernel arguments are already present."
+    fi
+}
+
+configure_sway_for_nvidia() {
+    [[ "$FEDORA_VARIANT" == "sway" ]] || return 0
+
+    log "Configuring Sway for NVIDIA GPU compatibility."
+
+    local sway_env_file="/etc/sway/environment"
+
+    # Ensure the file exists and add the required variables
+    sudo mkdir -p "$(dirname "$sway_env_file")"
+    
+    # Check if the variables already exist
+    if ! grep -q "SWAY_EXTRA_ARGS.*--unsupported-gpu" "$sway_env_file" 2>/dev/null; then
+        echo 'SWAY_EXTRA_ARGS="$SWAY_EXTRA_ARGS --unsupported-gpu"' | sudo tee -a "$sway_env_file" >/dev/null
+    fi
+
+    if ! grep -q "WLR_NO_HARDWARE_CURSORS" "$sway_env_file" 2>/dev/null; then
+        echo "WLR_NO_HARDWARE_CURSORS=1" | sudo tee -a "$sway_env_file" >/dev/null
     fi
 }
 
@@ -334,32 +358,35 @@ configure_luks_initramfs() {
     log "Configuring the initramfs for LUKS."
     printf '%s\n' 'force_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "' |
         sudo tee /etc/dracut.conf.d/nvidia.conf >/dev/null
-    
-    if [[ "$IS_LAPTOP" == "no" ]]; then
-        echo "If you have a CPU with integrated graphics (iGPU) and are on Desktop,
-        do you want to prevent it from stealing the display before Nvidia takes over?
-        (If your monitor is plugged directly into the NVIDIA GPU instead of Motherboard
-        and you want to prevent the iGPU from interfering)/n y/n:"
-        select choice in "y" "n"; do
-            case $iGPU_CHOICE in
-                "y")
-                    echo 'omit_drivers+=" ${IGPU_DRIVER} "' | sudo tee /etc/dracut.conf.d/omit-amdgpu.conf
+
+    # Only prompt for iGPU omission on desktop systems
+    if [[ "$IS_LAPTOP" == "no" && -n "$IGPU_DRIVER" ]]; then
+        echo "If you have a CPU with integrated graphics (iGPU) and are on Desktop,"
+        echo "do you want to prevent it from stealing the display before NVIDIA takes over?"
+        echo "(Only answer yes if your monitor is plugged directly into the NVIDIA GPU"
+        echo "and you want to prevent the iGPU from interfering)"
+        echo ""
+        select choice in "yes" "no"; do
+            case $choice in
+                "yes")
+                    printf '%s\n' "omit_drivers+=\" ${IGPU_DRIVER} \"" | sudo tee /etc/dracut.conf.d/omit-igpu.conf >/dev/null
+                    log "iGPU driver (${IGPU_DRIVER}) will be omitted from initramfs."
                     break
                     ;;
-                "n")
+                "no")
+                    log "iGPU driver will be retained in initramfs."
                     break
                     ;;
                 *)
-                    echo "Invalid option. Please enter y/n."
+                    echo "Invalid option. Please enter 'yes' or 'no'."
                     ;;
             esac
         done
     fi
-    
 
-    # Do not omit i915 or amdgpu automatically. On laptops, the internal display commonly depends on the integrated GPU. On desktops, the monitor may also be connected to the motherboard output.
+    # Informational log about integrated GPU handling
     if [[ "$CPU_VENDOR" == "Intel" || "$CPU_VENDOR" == "AMD" ]]; then
-        log "Integrated GPU driver is ${IGPU_DRIVER}; it will be retained."
+        log "Integrated GPU driver is ${IGPU_DRIVER}."
     fi
 
     sudo rpm-ostree initramfs --enable
@@ -370,6 +397,7 @@ prepare_driver_deployment() {
     # install_akmods_keys
     install_nvidia_driver
     configure_kernel_arguments
+    configure_sway_for_nvidia
     configure_luks_initramfs
 
     set_phase "verify"
@@ -385,6 +413,7 @@ Detected:
   Laptop:    ${IS_LAPTOP}
   LUKS:      ${HAS_LUKS}
   SecureBoot: ${SECURE_BOOT}
+  Variant:   ${FEDORA_VARIANT}
 
 Reboot now, then run this same script once more to verify:
 
